@@ -11,11 +11,17 @@ bvh_bench 512 -- Intel Core i5-14400F, Windows 11, single thread, wasm32-wasi (z
 
 0 mismatches between BVH and brute-force hit distances
 
-End to end: scenes/hero_knot.json, 320x180, 4 spp, depth 50, RR 3
+End to end (scene as of commit 278af1a, flat gold knot): scenes/hero_knot.json, 320x180, 4 spp, depth 50, RR 3
 scene scenes/hero_knot.json: 17285 objects, 2 lights; BVH sah (17284 prims, 19925 nodes, depth 17)
 render 320x180, 4 spp, depth 50, RR 3, threads 1
 load+build 0.124 s, render 0.48 s, wrote renders/work/e2e_bvh.png
 scene scenes/hero_knot.json: 17285 objects, 2 lights; BVH off (17284 prims, 19925 nodes, depth 17)
 render 320x180, 4 spp, depth 50, RR 3, threads 1
 load+build 0.132 s, render 158.73 s, wrote renders/work/e2e_nobvh.png
+Output images byte-identical: yes (cmp)
+
+End to end (scene as of commit a026a30, smooth copper knot, visible key light): 320x180, 4 spp, depth 50, RR 3
+scene scenes/hero_knot.json: 17287 objects, 2 lights; BVH sah (17286 prims, 19871 nodes, depth 18)
+load+build 0.126 s, render 0.44 s (BVH)
+load+build 0.126 s, render 110.97 s (--no-bvh)
 Output images byte-identical: yes (cmp)

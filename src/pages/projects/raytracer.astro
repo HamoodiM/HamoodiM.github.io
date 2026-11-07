@@ -12,6 +12,7 @@ import cornell from '../../assets/raytracer/hero_cornell.png';
 import knot from '../../assets/raytracer/hero_knot.png';
 import materials from '../../assets/raytracer/hero_materials.png';
 import nmapFinal from '../../assets/raytracer/nmap_final.png';
+import knotFlatSmooth from '../../assets/raytracer/knot_flat_vs_smooth.png';
 
 const BR = `${RT_REPO}/blob/portfolio-fixes/`;
 const OLD = `${RT_REPO}/blob/b79885c7bbb59f0ca26702afc4524f9ee90353e8/`;
@@ -151,7 +152,7 @@ bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& re
 ---
 <Base
   title="Raytracer, Mohammad Mohammad"
-  description="A CPU Monte Carlo path tracer in C++17 with next-event estimation, Russian roulette, a binned-SAH BVH and OpenMP. Five bug fixes with before/after renders, and measured BVH timings."
+  description="A CPU Monte Carlo path tracer in C++17 with next-event estimation, Russian roulette, a binned-SAH BVH and OpenMP. Five bug fixes, three of them with before/after renders, smooth-shaded meshes and measured BVH timings."
   ogImage={cornell}
   page="raytracer"
 >
@@ -163,7 +164,7 @@ bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& re
     <div class="tldr">
       <dl class="facts">
         <dt>Role</dt><dd>Solo</dd>
-        <dt>Dates</dt><dd>Oct 21–22, 2025 (3 commits); fixes, BVH, OpenMP and the WebAssembly build in Nov 2026 on the <code>portfolio-fixes</code> branch</dd>
+        <dt>Dates</dt><dd>Oct 21–22, 2025 (3 commits); fixes, BVH, OpenMP, smooth shading and the WebAssembly build in Nov 2026 on the <code>portfolio-fixes</code> branch</dd>
         <dt>Language</dt><dd>C++17 with CMake</dd>
         <dt>Libraries</dt><dd>GLM (vendored), GLFW and OpenGL for the viewer, nlohmann/json for scenes, stb_image for textures</dd>
         <dt>Based on</dt><dd><cite>Ray Tracing in One Weekend</cite> series (Peter Shirley and contributors)</dd>
@@ -176,7 +177,7 @@ bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& re
         <ul>
           <li><a href="#rng">The random-number bug</a>: one <code>static</code> that froze every sample into one octant.</li>
           <li><a href="#bvh">The BVH</a>: binned SAH, flat array, near child first, and the measured speed-up.</li>
-          <li><a href="#nee">Light sampling done right</a>: the missing 1/π and the double counting.</li>
+          <li><a href="#nee">Fixing light sampling</a>: the missing 1/π and the double counting.</li>
         </ul>
         <p class="tldr__links"><a href={RESUME}>Résumé (PDF)</a><a href={url('#raytracer')}>Live render on the home page</a></p>
       </div>
@@ -270,6 +271,18 @@ bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& re
       <h2>Ray-triangle intersection</h2>
       <p>Triangles use the Möller-Trumbore test. It solves for the hit distance <code>t</code> and the barycentric coordinates <code>u</code> and <code>v</code> directly with two cross products and a few dot products, without first intersecting the triangle's plane. Each early return rejects a case: the ray parallel to the triangle, <code>u</code> or <code>v</code> outside the triangle, or <code>t</code> outside the valid range. Smooth shading reuses the same <code>u</code> and <code>v</code> to interpolate vertex normals.</p>
       <CodeFigure href={`${OLD}src/geometry/triangle.cpp#L8-L39`} file="src/geometry/triangle.cpp" lines="8–39" code={tri} />
+
+      <h2 id="smooth">Smooth shading for meshes</h2>
+      <p class="status status--fixed">Added in <a href={rtCommit('2e10902634020a847bba01b2cf0b0eb75dbd03b7')}><code>2e10902</code></a></p>
+      <p>Every triangle used to shade with its face normal, so the 17,280-triangle knot looked faceted: in a metal, neighbouring faces reflect visibly different directions and the facets read as stripes. A triangle hit now carries two normals. The geometric normal, the normalised cross product of two edges, is the real surface, so it still decides which side of the glass a ray is on and whether a direction is above the surface. The shading normal, which the materials and the BRDF use, is interpolated from the three vertex normals with the same barycentric weights Möller-Trumbore already returns: n = normalize((1 − u − v)·n0 + u·n1 + v·n2).</p>
+      <p>Vertex normals come from the OBJ's <code>vn</code> lines when it has them. Otherwise each vertex gets the sum of the unnormalised cross products of the faces around it; a cross product's length is twice the face's area, so big faces count for more than slivers. Metal absorbs a reflected ray that points below either normal, and direct light skips lights below the geometric normal, so a tilted shading normal near a silhouette can't send light through the mesh. Smooth shading is off unless the scene sets <code>"smooth": true</code>, and <code>tests/smooth_normals_test.cpp</code> checks the area weighting, the barycentric interpolation on a tessellated sphere and the inside/outside orientation.</p>
+    </div>
+
+    <div class="wrap wide">
+      <figure class="rt-wide">
+        <Image src={knotFlatSmooth} alt="The copper torus knot rendered twice, flat shaded on the left with visible stripes along the tube, and smooth shaded on the right with continuous highlights; below each, a 2.4 times enlarged crop of the same area." widths={[800, 1280, 1920]} sizes="(min-width: 64rem) 60rem, 100vw" loading="lazy" decoding="async" />
+        <figcaption class="small muted">The same scene and settings with <code>"smooth": false</code> (left) and <code>true</code> (right), full frame and a 2.4× crop.</figcaption>
+      </figure>
     </div>
 
     <div class="wrap wide">
@@ -279,15 +292,15 @@ bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& re
           <figcaption>Materials: Lambertian, normal-mapped brick, glass, gold, chrome, two emissive spheres and depth of field. 960×540, 1024 spp.</figcaption>
         </figure>
         <figure>
-          <Image src={knot} alt="A gold torus knot made of 17,280 triangles floating over a checkerboard, with glass, mirror, brick and blue spheres around it." widths={[480, 960]} sizes="(min-width: 44rem) 36rem, 100vw" loading="lazy" />
-          <figcaption>A 17,280-triangle torus knot in the BVH, with glass, mirror and normal-mapped spheres. 960×540, 512 spp.</figcaption>
+          <Image src={knot} alt="A smooth brushed-copper torus knot made of 17,280 triangles floating over a checkerboard, with glass, mirror, brick and blue spheres around it." widths={[480, 960]} sizes="(min-width: 44rem) 36rem, 100vw" loading="lazy" />
+          <figcaption>A 17,280-triangle torus knot in the BVH, smooth shaded, brushed copper, with glass, mirror and normal-mapped spheres. 960×540, 512 spp.</figcaption>
         </figure>
         <figure>
           <Image src={nmapFinal} alt="Normal-mapped brick spheres after all fixes, with the bevels lit from the correct side." widths={[480, 960]} sizes="(min-width: 44rem) 36rem, 100vw" loading="lazy" />
           <figcaption>Normal-map test with all fixes: direct light now uses the normal-mapped normal too.</figcaption>
         </figure>
       </div>
-      {/* TODO-USER: these renders were copied from projects/Raytracer/renders on 2026-11-07. The branch has since gained a re-rendered hero_knot (smooth-shaded copper); copy the new file into src/assets/raytracer/ if you prefer it. */}
+      {/* Renders copied from projects/Raytracer/renders (portfolio-fixes, commit e15b167). */}
     </div>
 
     <div class="wrap prose">
@@ -321,5 +334,8 @@ bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& re
   .rt-media figcaption { margin-top: 0.5rem; }
   .formula { font-family: var(--font-display); font-size: var(--step-1); padding: 0.75rem 1rem; background: var(--paper-2); border-left: 3px solid var(--emit-ink); }
   .shots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rt-wide { max-width: 60rem; }
+  .rt-wide :global(img) { width: 100%; height: auto; }
+  .rt-wide figcaption { margin-top: 0.5rem; }
   @media (max-width: 60rem) { .shots { grid-template-columns: 1fr; } }
 </style>

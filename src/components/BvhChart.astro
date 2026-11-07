@@ -47,7 +47,7 @@ const ticks = [0.0001, 0.001, 0.01, 0.1, 1, 10];
     </div>
   </details>
   <p class="bvh__e2e">
-    A whole render of <code>{e2e.scene}</code> ({fmt(e2e.objects)} objects, {e2e.res}, {e2e.spp} spp) took <strong>{e2e.bvhS} s</strong> with the BVH and <strong>{e2e.bruteS} s</strong> without it. The two output images were byte-identical.
+    A whole render of <code>{e2e.scene}</code> ({fmt(e2e.objects)} objects, smooth-shaded knot, {e2e.res}, {e2e.spp} spp) took <strong>{e2e.bvhS} s</strong> with the BVH and <strong>{e2e.bruteS.toFixed(1)} s</strong> without it, about {e2e.speedup}× faster. The two output images were byte-identical.
   </p>
 </figure>
 

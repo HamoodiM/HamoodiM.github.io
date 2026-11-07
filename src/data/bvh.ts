@@ -25,4 +25,6 @@ export const bvhRows: BvhRow[] = [
 export const bvhMachine =
   'Intel Core i5-14400F, Windows 11, one thread, WebAssembly build (wasm32-wasi, clang -O2) running in Node 24.20';
 
-export const e2e = { scene: 'hero_knot.json', objects: 17285, res: '320×180', spp: 4, bvhS: 0.48, bruteS: 158.73 };
+// End to end, re-measured at commit a026a30 (smooth-shaded copper knot); matches the Raytracer README.
+// The earlier flat, gold version of the scene (commit 278af1a) took 0.48 s vs 158.7 s.
+export const e2e = { scene: 'hero_knot.json', objects: 17287, res: '320×180', spp: 4, bvhS: 0.44, bruteS: 111.0, speedup: 250 };
