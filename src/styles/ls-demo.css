@@ -1,0 +1,109 @@
+/* Dossier styling for the LinguaSpy demo widget (src/vendor/linguaspy-demo, BEM hooks ls-demo__*).
+   Scoped under .demo so it can't leak. Colours come from the dossier tokens set on .ch-ls. */
+.demo .ls-demo {
+  --ok: #2b6436;
+  --wrong: var(--d-stamp, #b8322a);
+  --accent: #8a5a0e;
+  display: grid;
+  gap: 0.9rem;
+  color: var(--d-ink);
+}
+.demo .ls-demo button {
+  font: inherit;
+  font-size: 0.92rem;
+  color: var(--d-ink);
+  background: var(--d-card);
+  border: 1px solid var(--d-rule);
+  border-radius: 2px;
+  padding: 0.45rem 0.75rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.demo .ls-demo button:hover:not(:disabled) { border-color: var(--d-ink); }
+.demo .ls-demo button:disabled { opacity: 0.45; cursor: default; }
+.demo .ls-demo button:focus-visible, .demo .ls-demo input:focus-visible { outline: 2px solid var(--d-stamp); outline-offset: 2px; }
+.demo .ls-demo input {
+  font-family: var(--dossier-type);
+  font-size: 1rem;
+  color: var(--d-ink);
+  background: #fffaf0;
+  border: 0;
+  border-bottom: 2px solid var(--d-ink);
+  border-radius: 0;
+  padding: 0.4rem 0.3rem;
+  min-height: 44px;
+}
+.demo .ls-demo [hidden] { display: none !important; }
+
+.demo .ls-demo__cities { display: flex; gap: 0.4rem; }
+.demo .ls-demo__city { font-family: var(--dossier-type) !important; font-weight: 700; }
+.demo .ls-demo__city[aria-pressed='true'] { background: var(--d-ink) !important; color: #fff8ec !important; border-color: var(--d-ink) !important; }
+
+.demo .ls-demo__npc, .demo .ls-demo__answer, .demo .ls-demo__srs {
+  background: var(--d-card);
+  border: 1px solid var(--d-rule);
+  padding: 1rem 1.1rem;
+}
+.demo .ls-demo__npc { border-left: 4px solid var(--d-ink); }
+.demo .ls-demo__speaker { margin: 0; color: var(--d-ink-2); font-size: 0.85rem; font-family: var(--dossier-type); }
+.demo .ls-demo__prompt { margin: 0.25rem 0; font-family: var(--font-display); font-size: var(--step-2); font-weight: 400; line-height: 1.2; }
+.demo .ls-demo__reading { margin: 0 0 0.5rem; color: var(--d-ink-2); font-style: italic; }
+.demo .ls-demo__translation { margin: 0.5rem 0 0; color: var(--d-ink-2); }
+.demo .ls-demo__peek { min-height: 36px !important; font-size: 0.82rem !important; }
+.demo .ls-demo__task { margin: 0; font-weight: 700; }
+.demo .ls-demo__level { margin: 0.15rem 0 0.75rem; color: var(--d-ink-2); font-size: 0.85rem; }
+
+.demo .ls-demo__line {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  min-height: 3.5rem; padding: 0.4rem;
+  border-bottom: 2px dashed var(--d-rule);
+  margin-bottom: 0.75rem;
+}
+.demo .ls-demo__tiles, .demo .ls-demo__options, .demo .ls-demo__keys, .demo .ls-demo__actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.demo .ls-demo__options { flex-direction: column; }
+.demo .ls-demo__options button { text-align: left; }
+.demo .ls-demo__tile, .demo .ls-demo__word {
+  display: inline-flex; flex-direction: column; align-items: center; line-height: 1.15;
+  font-family: var(--dossier-type); font-weight: 700;
+}
+.demo .ls-demo__tile { background: #fffaf0 !important; box-shadow: 0 1px 0 var(--d-rule); }
+.demo .ls-demo__tile[data-state='placed'] { visibility: hidden; }
+.demo .ls-demo__tile-reading { font-size: 0.7rem; color: var(--d-ink-2); font-weight: 400; }
+.demo .ls-demo__word--ok, .demo .ls-demo__option--ok { border-color: var(--ok) !important; color: var(--ok) !important; }
+.demo .ls-demo__word--wrong, .demo .ls-demo__option--wrong { border-color: var(--wrong) !important; color: var(--wrong) !important; }
+.demo .ls-demo__word--accent { border-color: var(--accent) !important; color: var(--accent) !important; }
+.demo .ls-demo__typing { margin-bottom: 0.75rem; line-height: 2.6; }
+.demo .ls-demo__typing .ls-demo__input:not(.ls-demo__input--gap) { width: 100%; }
+.demo .ls-demo__keys { margin-bottom: 0.75rem; }
+.demo .ls-demo__key { min-width: 44px; padding: 0.35rem !important; }
+.demo .ls-demo__submit { font-weight: 700; background: var(--d-ink) !important; color: #fff8ec !important; border-color: var(--d-ink) !important; }
+
+.demo .ls-demo__feedback { min-height: 1.5em; }
+.demo .ls-demo__feedback[data-state='hint'] { color: var(--accent); }
+.demo .ls-demo__feedback[data-state='pass'], .demo .ls-demo__feedback[data-state='assisted'] { color: var(--ok); }
+.demo .ls-demo__feedback[data-state='fail'] { color: var(--wrong); }
+.demo .ls-demo__graded { margin: 0 0 0.25rem; font-family: var(--dossier-type); font-weight: 700; }
+.demo .ls-demo__graded .ls-demo__word { display: inline; border-bottom: 2px solid currentColor; margin-right: 0.35em; }
+.demo .ls-demo__message { margin: 0; }
+
+.demo .ls-demo__cover-meter { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.75rem; font-family: var(--dossier-type); font-weight: 700; }
+.demo .ls-demo__cover-track { height: 0.7rem; background: rgba(60, 45, 20, 0.15); overflow: hidden; }
+.demo .ls-demo__cover-fill { display: block; height: 100%; background: var(--ok); transition: width 400ms var(--ease), background-color 300ms var(--ease); }
+.demo .ls-demo__cover-meter[data-state='mid'] .ls-demo__cover-fill { background: var(--accent); }
+.demo .ls-demo__cover-meter[data-state='low'] .ls-demo__cover-fill { background: var(--wrong); }
+.demo .ls-demo__cover-meter[data-state='blown'] .ls-demo__cover-value { color: var(--wrong); }
+
+.demo .ls-demo__boxes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; }
+@media (min-width: 640px) { .demo .ls-demo__boxes { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.demo .ls-demo__box { border: 1px solid var(--d-rule); background: #fffaf0; padding: 0.4rem; min-height: 5.25rem; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.demo .ls-demo__box--active { border-color: var(--d-stamp); box-shadow: inset 0 0 0 1px var(--d-stamp); }
+.demo .ls-demo__box-name { font-family: var(--dossier-type); font-weight: 700; font-size: 0.85rem; }
+.demo .ls-demo__box-interval { color: var(--d-ink-2); font-size: 0.75rem; }
+.demo .ls-demo__box-items { display: flex; flex-direction: column; gap: 0.2rem; }
+.demo .ls-demo__chip { font-size: 0.72rem; padding: 0.1rem 0.25rem; background: rgba(60, 45, 20, 0.12); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.demo .ls-demo__chip[data-due='true'] { outline: 1px solid var(--accent); }
+.demo .ls-demo__chip--current { font-weight: 700; background: var(--d-stamp); color: #fff8ec; }
+.demo .ls-demo__unseen { color: var(--d-ink-2); font-size: 0.85rem; margin: 0.5rem 0; }
+.demo .ls-demo__clock { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.demo .ls-demo__time { margin-right: auto; font-size: 0.85rem; color: var(--d-ink-2); }
+.demo .ls-demo__ff { min-height: 36px !important; font-size: 0.82rem !important; }

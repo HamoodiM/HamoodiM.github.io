@@ -1,0 +1,24 @@
+---
+import { RESUME, GITHUB, LINKEDIN, EMAIL, NAME } from '../data/site';
+---
+<footer class="foot">
+  <div class="wrap foot__inner">
+    <p class="foot__name">{NAME}, Ottawa.</p>
+    <ul class="foot__links">
+      <li><a href={`mailto:${EMAIL}`}>{EMAIL}</a></li>
+      <li><a href={RESUME}>Résumé (PDF)</a></li>
+      <li><a href={GITHUB}>github.com/HamoodiM</a></li>
+      <li><a href={LINKEDIN}>LinkedIn</a></li>
+    </ul>
+    <p class="muted small">Last updated November 2026. <!-- TODO-USER: update this date whenever you change the site. -->
+      Set in Fraunces and Atkinson Hyperlegible Next. The renders on this site come from my path tracer.</p>
+  </div>
+</footer>
+
+<style>
+  .foot { border-top: 1px solid var(--rule); padding-block: 3rem 4rem; margin-top: 2rem; }
+  .foot__inner { display: grid; gap: 1rem; }
+  .foot__name { font-family: var(--font-display); font-size: var(--step-2); }
+  .foot__links { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; }
+  .foot__links a { overflow-wrap: anywhere; }
+</style>

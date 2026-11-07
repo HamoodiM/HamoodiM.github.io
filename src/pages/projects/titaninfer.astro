@@ -1,0 +1,177 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProjectHead from '../../components/ProjectHead.astro';
+import CodeFigure from '../../components/CodeFigure.astro';
+import MatmulViz from '../../components/MatmulViz.astro';
+import '../../styles/project.css';
+import { url, RESUME } from '../../data/site';
+
+const TI = 'https://github.com/HamoodiM/TitanInfer/blob/3c06f119587e754d79a5edb7b47c6b92786fab3e/';
+
+const alloc = `
+#ifdef _WIN32
+    // Windows: _aligned_malloc
+    ptr = static_cast<float*>(_aligned_malloc(aligned_size, ALIGNMENT));
+    if (!ptr) {
+        throw std::bad_alloc();
+    }
+#elif defined(__APPLE__)
+    // macOS: posix_memalign
+    if (posix_memalign(reinterpret_cast<void**>(&ptr), ALIGNMENT, aligned_size) != 0) {
+        throw std::bad_alloc();
+    }
+#else
+    // Linux: aligned_alloc (C++17)
+    ptr = static_cast<float*>(std::aligned_alloc(ALIGNMENT, aligned_size));
+    if (!ptr) {
+        throw std::bad_alloc();
+    }
+#endif`;
+const kernel = `
+                        for (; kk + 8 <= k + kb; kk += 8) {
+                            // Load 8 elements from A[ii, kk:kk+8]
+                            __m256 a_vec = _mm256_loadu_ps(A_data + ii * K + kk);
+
+                            // Load 8 elements from B[kk:kk+8, jj]
+                            // Note: B is row-major, so we need to gather elements
+                            __m256 b_vec =
+                                _mm256_set_ps(B_data[(kk + 7) * N + jj], B_data[(kk + 6) * N + jj],
+                                              B_data[(kk + 5) * N + jj], B_data[(kk + 4) * N + jj],
+                                              B_data[(kk + 3) * N + jj], B_data[(kk + 2) * N + jj],
+                                              B_data[(kk + 1) * N + jj], B_data[(kk + 0) * N + jj]);
+
+#ifdef __FMA__
+                            // Use fused multiply-add
+                            sum_vec = _mm256_fmadd_ps(a_vec, b_vec, sum_vec);
+#else
+                            // Manual multiply-add
+                            __m256 prod = _mm256_mul_ps(a_vec, b_vec);
+                            sum_vec     = _mm256_add_ps(sum_vec, prod);
+#endif
+                        }`;
+const fmt = `
+/// Magic number for .titan files: "TITN"
+static constexpr char TITAN_MAGIC[4] = {'T', 'I', 'T', 'N'};
+
+/// Current format version
+static constexpr uint32_t TITAN_FORMAT_VERSION = 2;`;
+const parser = `
+// Read and validate version
+uint32_t version = read_value<uint32_t>(in);
+if (version > TITAN_FORMAT_VERSION) {
+    throw std::runtime_error("ModelParser: unsupported format version " +
+                             std::to_string(version) +
+                             " (max supported: " + std::to_string(TITAN_FORMAT_VERSION) + ")");
+}`;
+const engine = `
+// Layers 1..N-1: buffers_[i-1] -> buffers_[i]
+for (size_t i = 1; i < model_->size(); ++i) {
+    if (profiling_enabled_) {
+        auto start = clock::now();
+        model_->layer(i).forward(buffers_[i - 1], buffers_[i]);
+        auto end = clock::now();
+        stats_.layer_times_ms[i] +=
+            std::chrono::duration<double, std::milli>(end - start).count();
+    } else {
+        model_->layer(i).forward(buffers_[i - 1], buffers_[i]);
+    }
+}`;
+---
+<Base
+  title="TitanInfer, Mohammad Mohammad"
+  description="TitanInfer: a C++20 neural-network inference library without BLAS. Aligned tensors, a cache-blocked AVX2/FMA matrix multiply with an interactive cache model, a binary model format and a PyTorch exporter."
+  page="titaninfer"
+>
+  <ProjectHead slug="titaninfer" title="TitanInfer" lede="A neural-network inference library in C++, written without BLAS, Eigen or LAPACK. It loads a model from a binary file and runs it on the CPU.">
+    <div slot="media" class="term ti-media">
+      <MatmulViz />
+    </div>
+    <div class="tldr">
+      <dl class="facts">
+        <dt>Role</dt><dd>Solo</dd>
+        <dt>Dates</dt><dd>Feb 8 to Mar 28, 2026 (29 commits)</dd>
+        <dt>Language</dt><dd>C++20 with CMake (the cluster controller uses <code>std::jthread</code>). Python for the PyTorch exporter.</dd>
+        <dt>Tests</dt><dd>346 GoogleTest cases (294 <code>TEST</code>, 52 <code>TEST_F</code>) in 20 test executables. GitHub Actions runs on Ubuntu 22.04 and Windows.</dd>
+        <dt>Dependencies</dt><dd>The core library links only the system threads library. GoogleTest and Google Benchmark are fetched for tests. gRPC is optional and off by default.</dd>
+        <dt>Code</dt><dd><a href="https://github.com/HamoodiM/TitanInfer">github.com/HamoodiM/TitanInfer</a></dd>
+      </dl>
+      <div>
+        <h2>Worth a look</h2>
+        <ul>
+          <li><a href="#kernel">The blocked AVX2/FMA kernel</a>, its weak spot, and the cache model above.</li>
+          <li><a href="#format">The <code>.titan</code> format</a> and the engine's per-layer buffers.</li>
+          <li><a href="#issues">Known issues</a>, including what isn't measured yet.</li>
+        </ul>
+        <p class="tldr__links"><a href={RESUME}>Résumé (PDF)</a><a href={url('#titaninfer')}>On the home page</a></p>
+      </div>
+    </div>
+  </ProjectHead>
+
+  {/* TODO-USER: record a benchmark run (matrix_benchmark, Release, CPU visible) and a model loaded from PyTorch with profiling on. A clip or screenshot can go next to the cache model above. */}
+
+  <div class="longform">
+    <div class="wrap prose">
+      <h2>What I built</h2>
+      <ul>
+        <li>An N-dimensional tensor that owns 32-byte-aligned memory, with copy and move semantics.</li>
+        <li>A scalar matrix multiply and a cache-blocked AVX2 version that uses FMA when the compiler enables it. The AVX2 kernel is tested and benchmarked on its own, but the layers don't call it yet.</li>
+        <li>Dense, ReLU, Sigmoid, Tanh, Softmax, Conv2D, max and average pooling, and flatten layers in a <code>Sequential</code> container.</li>
+        <li>The <code>.titan</code> binary model format, a writer and a parser, and a Python script that exports PyTorch models to it.</li>
+        <li>An inference engine that allocates one output buffer per layer at load time, with warmup runs and per-layer timing.</li>
+        <li>A <code>ModelHandle</code> guarded by a mutex, an exception hierarchy, a logger, and a C API (<code>titaninfer_load</code>, <code>titaninfer_predict</code>, <code>titaninfer_free</code> and friends) with a C example.</li>
+        <li>INT8 quantization (<code>q = clamp(round(x / scale) + zero_point, -128, 127)</code>) with an SSE kernel that widens to 16 bits (<code>_mm_cvtepi8_epi16</code>) and multiply-adds with <code>_mm_madd_epi16</code>, and fusion of Dense followed by ReLU or Sigmoid into one layer.</li>
+        <li>A thread pool and a request batcher that groups concurrent inference calls.</li>
+        <li>A multi-model server with versioned routes (<code>/v1/models/&#123;name&#125;/versions/&#123;ver&#125;/predict</code>), LRU model eviction and per-tenant quotas.</li>
+        <li>A cluster controller that routes with power-of-two random choices over a load score (queue depth, CPU, p95 latency against the SLO), a per-node circuit breaker, and autoscaling signals, with optional gRPC binaries, Docker files and a chaos test.</li>
+      </ul>
+
+      <h2>An aligned tensor</h2>
+      <p>AVX2 loads work on 32-byte registers, so the tensor allocates its storage on a 32-byte boundary. The byte size is rounded up to a multiple of the alignment because <code>std::aligned_alloc</code> requires it, and each platform gets its own allocator:</p>
+      <CodeFigure href={`${TI}src/tensor.cpp#L141-L158`} file="src/tensor.cpp" lines="141–158" code={alloc} />
+      <p>The tensor is RAII: the destructor frees through the matching platform call, and the move constructor takes the pointer and leaves the source empty, so returning tensors by value doesn't copy the data. In practice the matmul kernel below still uses unaligned loads (<code>_mm256_loadu_ps</code>), because a row in the middle of a matrix isn't guaranteed to start on a 32-byte boundary.</p>
+
+      <h2 id="kernel">Blocked AVX2/FMA matrix multiply</h2>
+      <p>The SIMD matmul tiles the loops into 64 × 256 × 64 blocks (MC, KC, NC) so each block's working set stays in cache, then runs an 8-wide inner loop along K. A horizontal add at the end collapses the 8 lanes into one value, and a scalar loop handles the remainder. The model at the top of this page runs the same loop order on 16 × 16 matrices with a 24-line cache, so you can watch which lines get reused.</p>
+      <CodeFigure href={`${TI}src/ops/matrix_ops_simd.cpp#L124-L144`} file="src/ops/matrix_ops_simd.cpp" lines="124–144" code={kernel} />
+      <p>The kernel isn't on the inference path yet: the Dense, fused and Conv2D layers still call the scalar <code>ops::matmul</code> and <code>ops::matvec</code>. Routing them through the AVX2 kernel is the first next step.</p>
+      <p>The kernel's own weak point is the load of B. B is row-major, so 8 consecutive K values for one column are N floats apart, and the kernel gathers them with <code>_mm256_set_ps</code> from 8 scalar loads. I expect that gather to be the bottleneck, but I haven't profiled it yet. The next step is to pack each block of B into a contiguous, transposed buffer once, then compute several output columns per pass so each A load is reused.</p>
+      <p class="todo">TODO-USER: run <code>matrix_benchmark</code> (Release, note the CPU) and add the measured naive vs AVX2 times here. Don't quote the "3-5x" from the old README until you've measured it.</p>
+
+      <h2 id="format">The .titan model format</h2>
+      <p>A <code>.titan</code> file starts with the magic bytes <code>TITN</code> and a format version, followed by a layer count and, for each layer, a type id, its shape parameters and its float weights. The parser refuses files from a newer format version than it knows instead of misreading them:</p>
+      <CodeFigure href={`${TI}include/titaninfer/io/format.hpp#L8-L12`} file="include/titaninfer/io/format.hpp" lines="8–12" code={fmt} />
+      <CodeFigure href={`${TI}src/io/model_parser.cpp#L50-L56`} file="src/io/model_parser.cpp" lines="50–56" code={parser} />
+      <p>When the engine loads a model it walks the layers once, computes each output shape, and allocates an output buffer per layer. A forward pass then reads from buffer <code>i - 1</code> and writes into buffer <code>i</code>, so layer outputs reuse the same memory on every call:</p>
+      <CodeFigure href={`${TI}src/engine/inference_engine.cpp#L216-L227`} file="src/engine/inference_engine.cpp" lines="216–227" code={engine} />
+      <p>That isn't the same as allocation-free inference. The Dense layer's batched (2-D) path allocates a transposed copy of its weights on every call, and <code>predict()</code> returns a deep copy of the last buffer.</p>
+
+      <h2 id="issues">Known issues</h2>
+      <ul>
+        <li>The layers use the scalar matmul, not the AVX2 kernel.</li>
+        <li>The Dense layer's 2-D path allocates and transposes its weights on every call. Storing the weights pre-transposed at load time would remove that.</li>
+        <li><code>predict()</code> copies its output. An overload that writes into a caller-owned tensor would remove that allocation.</li>
+        <li>The PyTorch exporter writes format version 1 while the C++ writer uses version 2. The parser accepts both, but the exporter only handles <code>nn.Linear</code> and activations, not Conv2D.</li>
+        <li><code>ModelHandle</code> uses one mutex for <code>predict</code>, so concurrent calls on the same handle run one at a time.</li>
+        <li>No benchmark results are committed yet, and the README's test counts are out of date.</li>
+      </ul>
+
+      <h2>How I built this</h2>
+      {/* TODO-USER: choose one wording (or write your own), put it in the paragraph below, and delete this comment and the bracketed note.
+      Facts to stay consistent with: 2 of the 29 commits (both on 2026-03-28, "Titaninfer Cleanup Patch") carry "Co-Authored-By: Claude Sonnet 4.6". No agent files are in the repo. If you used AI on other commits, say so.
+
+      Option A (if AI use was limited to the cleanup):
+      "I wrote TitanInfer myself over February and March 2026. For the final cleanup commits I used Claude (Anthropic) to help with refactoring and CI fixes, and those commits are marked as co-authored."
+
+      Option B (if AI helped throughout):
+      "I built TitanInfer with AI coding assistants, mainly Claude (Anthropic), for drafting code and tests. I planned the phases and the design (tensor layout, kernel blocking, file format, engine buffers), reviewed the code, and debugged the CI failures on Linux and Windows."
+
+      The cache model on this page was written for this site, not taken from the repo. */}
+      <p class="todo">[choose disclosure wording] TODO-USER</p>
+      <p><a href={url('#work')}>Back to all projects</a></p>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .ti-media { padding: clamp(1rem, 3vw, 1.75rem); }
+</style>

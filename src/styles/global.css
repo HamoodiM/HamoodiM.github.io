@@ -1,0 +1,302 @@
+/* Converge: global tokens, type and layout.
+   Palette comes from the work itself: the slate backdrop of the renders, Cornell-box red and green
+   (used as a pair: before/after, brute force/BVH), and the warm emissive white of the area lights. */
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('../fonts/fraunces-latin-opsz-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fraunces';
+  src: url('../fonts/fraunces-latin-ext-opsz-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Atkinson Next';
+  src: url('../fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Atkinson Next';
+  src: url('../fonts/atkinson-hyperlegible-next-latin-ext-wght-normal.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Metric-matched fallbacks keep the swap from shifting layout. */
+@font-face {
+  font-family: 'Fraunces fallback';
+  src: local('Georgia'), local('Times New Roman');
+  size-adjust: 103%;
+  ascent-override: 94%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Atkinson fallback';
+  src: local('Arial'), local('Helvetica');
+  size-adjust: 101%;
+  ascent-override: 96%;
+  descent-override: 26%;
+  line-gap-override: 0%;
+}
+
+:root {
+  color-scheme: light dark;
+
+  /* Light: a cool studio grey, like the floor and sky of the renders. */
+  --paper: #ebedf0;
+  --paper-2: #dfe2e7;
+  --paper-3: #d2d6dd;
+  --ink: #14161b;
+  --ink-2: #474d58;
+  --rule: #bfc4cc;
+  --red: #a8231b;
+  --green: #2b6436;
+  --emit: #ffd9a0;
+  --emit-ink: #7a4e0e;
+  --focus: #14161b;
+
+  --font-display: 'Fraunces', 'Fraunces fallback', Georgia, serif;
+  --font-text: 'Atkinson Next', 'Atkinson fallback', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+  /* One easing curve for everything that moves. */
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --dur: 480ms;
+
+  --measure: 38rem;
+  --wide: 76rem;
+  --gutter: clamp(1rem, 4vw, 3rem);
+  --bar-h: 3rem;
+
+  /* Type scale, ratio 1.25 from 17px body. */
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.3125rem;
+  --step-2: 1.625rem;
+  --step-3: clamp(1.9rem, 1.4rem + 2vw, 2.6rem);
+  --step-4: clamp(2.4rem, 1.6rem + 3.6vw, 4rem);
+  --step-5: clamp(3rem, 1rem + 8.4vw, 8.25rem);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark: the slate backdrop of hero_materials, lit by the warm area light. */
+    --paper: #16191e;
+    --paper-2: #1e2229;
+    --paper-3: #272c35;
+    --ink: #e9e7e2;
+    --ink-2: #a8aeb9;
+    --rule: #353b46;
+    --red: #e46a5e;
+    --green: #7dbf8a;
+    --emit-ink: #ffd9a0;
+    --focus: #ffd9a0;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--bar-h) + 1rem);
+}
+html[data-motion='on'] { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  font-kerning: normal;
+  font-variant-numeric: proportional-nums;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100svh;
+  overflow-x: clip;
+}
+
+img, video, canvas, svg { display: block; max-width: 100%; height: auto; }
+img, video { background: var(--paper-2); }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.05;
+  margin: 0;
+  text-wrap: balance;
+  font-optical-sizing: auto;
+}
+h1 { font-size: var(--step-5); font-weight: 300; letter-spacing: -0.035em; line-height: 0.92; }
+h2 { font-size: var(--step-4); letter-spacing: -0.025em; font-weight: 350; }
+h3 { font-size: var(--step-2); letter-spacing: -0.01em; font-weight: 500; line-height: 1.15; }
+
+p, ul, ol, dl, figure, pre, table { margin: 0; }
+p + p { margin-top: 0.9em; }
+p { text-wrap: pretty; }
+
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 1px; }
+
+code, pre, kbd, samp { font-family: var(--font-mono); font-size: 0.86em; }
+:not(pre) > code { padding: 0.05em 0.3em; background: var(--paper-2); border-radius: 3px; overflow-wrap: anywhere; }
+
+cite { font-style: italic; }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.skip {
+  position: fixed; left: 0.75rem; top: 0.5rem; z-index: 100;
+  padding: 0.5rem 0.75rem; background: var(--ink); color: var(--paper);
+  transform: translateY(-200%);
+}
+.skip:focus { transform: none; }
+
+/* ---------- layout ---------- */
+.wrap { width: min(100% - 2 * var(--gutter), var(--wide)); margin-inline: auto; }
+.prose { max-width: var(--measure); }
+.prose > * + * { margin-top: 1rem; }
+.prose ul, .prose ol { padding-left: 1.2em; }
+.prose li + li { margin-top: 0.45em; }
+.prose h2 { margin-top: 3.5rem; font-size: var(--step-3); }
+.prose h3 { margin-top: 2.5rem; }
+.prose h2 + *, .prose h3 + * { margin-top: 1rem; }
+
+main { display: block; }
+.section { padding-block: clamp(4rem, 9vw, 8rem); }
+
+.muted { color: var(--ink-2); }
+.small { font-size: var(--step--1); }
+
+/* Visible TODO markers (kept from the plain site on purpose). */
+.todo {
+  border-left: 3px solid var(--red);
+  padding: 0.4rem 0.75rem;
+  background: color-mix(in srgb, var(--red) 9%, transparent);
+  font-size: var(--step--1);
+}
+
+/* ---------- code figures ---------- */
+.code { margin-block: 1.5rem; }
+.code figcaption { font-size: var(--step--1); color: var(--ink-2); margin-bottom: 0.4rem; overflow-wrap: anywhere; }
+.code pre {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.5;
+  font-size: 0.82rem;
+  tab-size: 4;
+  border-radius: 2px;
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  font: inherit;
+  font-size: var(--step--1);
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+}
+.btn:hover { background: var(--ink); color: var(--paper); }
+.btn[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- facts list (TL;DR) ---------- */
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1.25rem; }
+.facts dt { color: var(--ink-2); }
+.facts dd { margin: 0; }
+@media (max-width: 34rem) {
+  .facts { grid-template-columns: 1fr; gap: 0; }
+  .facts dd { margin-bottom: 0.6rem; }
+}
+
+/* ---------- motion gating ----------
+   Content is visible without JS. Animated start states are applied by scripts at runtime only when
+   html[data-motion="on"]. */
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion='on']) *, html:not([data-motion='on']) *::before, html:not([data-motion='on']) *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+html[data-motion='off'] *, html[data-motion='off'] *::before, html[data-motion='off'] *::after {
+  transition-duration: 1ms !important;
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+/* Cross-document view transitions (card to project page). Firefox navigates instantly. */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 260ms; animation-timing-function: var(--ease); }
+::view-transition-group(*) { animation-duration: 520ms; animation-timing-function: var(--ease); }
+html[data-motion='off']::view-transition-group(*),
+html[data-motion='off']::view-transition-old(*),
+html[data-motion='off']::view-transition-new(*) { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion='on'])::view-transition-group(*),
+  html:not([data-motion='on'])::view-transition-old(*),
+  html:not([data-motion='on'])::view-transition-new(*) { animation: none !important; }
+}
+
+/* Scroll progress line under the bar: CSS scroll-driven, enhancement only. */
+.progress { display: none; }
+@supports (animation-timeline: scroll()) {
+  html[data-motion='on'] .progress {
+    display: block;
+    position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+    background: var(--emit-ink);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root block);
+  }
+  @keyframes progress-grow { to { transform: scaleX(1); } }
+}
+
+/* TitanInfer chapter: profiler/terminal palette (same in light and dark). */
+.term {
+  --t-bg: #0f1412;
+  --t-panel: #141b18;
+  --t-ink: #d6e2da;
+  --t-ink-2: #8fa198;
+  --t-rule: #26332d;
+  --t-cell: #1d2723;
+  --t-a: #5b8db8;
+  --t-b: #c9963a;
+  --t-c: #d6e2da;
+  --t-hot: #7cffb2;
+  --t-miss: #e46a5e;
+  --t-hit: #7dbf8a;
+  background: var(--t-bg);
+  color: var(--t-ink);
+}
+.term a { color: var(--t-ink); }
+.term :focus-visible { outline-color: var(--t-hot); }
+.term :not(pre) > code { background: var(--t-cell); color: var(--t-ink); }

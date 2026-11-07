@@ -1,0 +1,64 @@
+---
+// Cache-blocking visualizer for TitanInfer's matmul_avx2 loop nest (src/ops/matrix_ops_simd.cpp).
+// A toy model: 16x16 matrices, blocks MC = NC = 4, KC = 8 (the real kernel uses 64 x 256 x 64), and
+// a 24-line LRU cache with 4-float lines. Counts come from simulating that cache, not from hardware.
+---
+<figure class="mm" data-island="matmul" aria-labelledby="mm-cap">
+  <div class="mm__screen">
+    <div class="mm__bar">
+      <span>matmul: C += A × B, 16 × 16 floats</span>
+      <span class="mm__mode" data-mm-modelabel>blocked order</span>
+    </div>
+    <canvas class="mm__canvas" width="720" height="300" role="img" aria-label="Three 16 by 16 grids, A, B and C. The highlighted cells show which elements of A and B the current 8-wide multiply-add reads and which element of C it writes, and which of them are already in the modelled cache." data-mm-canvas></canvas>
+    <div class="mm__cache" aria-hidden="true">
+      <span class="mm__cachelabel">cache, 24 lines, most recent first</span>
+      <span class="mm__slots" data-mm-slots></span>
+    </div>
+    <dl class="mm__stats" aria-live="off">
+      <div><dt>step</dt><dd data-mm-step>0 / 512</dd></div>
+      <div><dt>lines loaded</dt><dd data-mm-miss>0</dd></div>
+      <div><dt>cache hits</dt><dd data-mm-hit>0</dd></div>
+      <div class="mm__cmp"><dt>whole run, lines loaded</dt><dd data-mm-compare>unblocked –, blocked –</dd></div>
+    </dl>
+  </div>
+  <div class="mm__controls" hidden data-mm-controls>
+    <button class="btn" type="button" data-mm="play" aria-pressed="false">Play</button>
+    <button class="btn" type="button" data-mm="step">Step</button>
+    <span class="mm__seg" role="group" aria-label="Loop order">
+      <button class="btn" type="button" data-mm="blocked" aria-pressed="true">Blocked</button>
+      <button class="btn" type="button" data-mm="naive" aria-pressed="false">Unblocked</button>
+    </span>
+    <label class="mm__scrub"><span class="visually-hidden">Position in the loop</span><input type="range" min="0" max="512" value="0" data-mm-range /></label>
+  </div>
+  <figcaption id="mm-cap" class="mm__cap small">
+    A model, not a measurement: 16 × 16 matrices split into 4 × 8 and 8 × 4 blocks (the real kernel uses 64 × 256 × 64) and a 24-line cache that evicts the least recently used line. Same arithmetic in both orders; only the order of the loops changes.
+  </figcaption>
+</figure>
+
+<style>
+  .mm { display: grid; gap: 0.75rem; }
+  .mm__screen { background: var(--t-bg); color: var(--t-ink); border: 1px solid var(--t-rule); font-family: var(--font-mono); font-size: 0.78rem; }
+  .mm__bar { display: flex; justify-content: space-between; gap: 1rem; padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--t-rule); color: var(--t-ink-2); }
+  .mm__mode { color: var(--t-hot); }
+  .mm__canvas { width: 100%; height: auto; aspect-ratio: 720 / 300; display: block; background: var(--t-bg); }
+  .mm__cache { display: grid; gap: 0.35rem; padding: 0.5rem 0.75rem; border-top: 1px solid var(--t-rule); }
+  .mm__cachelabel { color: var(--t-ink-2); }
+  .mm__slots { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 2px; min-height: 1.1rem; }
+  .mm__slots :global(i) { display: block; height: 1.1rem; background: var(--t-cell); font-style: normal; font-size: 0.6rem; line-height: 1.1rem; text-align: center; color: #0f1412; }
+  .mm__slots :global(i.a) { background: var(--t-a); }
+  .mm__slots :global(i.b) { background: var(--t-b); }
+  .mm__slots :global(i.c) { background: var(--t-c); }
+  .mm__stats { display: flex; flex-wrap: wrap; gap: 0.25rem 1.75rem; padding: 0.5rem 0.75rem 0.7rem; border-top: 1px solid var(--t-rule); margin: 0; }
+  .mm__stats div { display: flex; gap: 0.5rem; }
+  .mm__stats dt { color: var(--t-ink-2); }
+  .mm__stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .mm__cmp dd { color: var(--t-hot); }
+  .mm__controls { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .mm__controls .btn { color: var(--t-ink); border-color: var(--t-rule); }
+  .mm__controls .btn:hover, .mm__controls .btn[aria-pressed='true'] { background: var(--t-ink); color: var(--t-bg); border-color: var(--t-ink); }
+  .mm__seg { display: inline-flex; gap: 0; }
+  .mm__seg .btn + .btn { margin-left: -1px; }
+  .mm__scrub { flex: 1; min-width: 10rem; display: flex; }
+  .mm__scrub input { width: 100%; accent-color: var(--t-hot); }
+  .mm__cap { color: var(--t-ink-2); max-width: 46rem; }
+</style>

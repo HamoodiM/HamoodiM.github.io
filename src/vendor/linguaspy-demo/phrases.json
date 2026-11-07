@@ -1,0 +1,273 @@
+{
+  "about": "Real LinguaSpy content, copied from the game's Python content build scripts (the scripts that author the UE data assets). Tile strings are split exactly as the scripts split them: on spaces for French, on '|' for Japanese answers. Nothing here is invented.",
+  "sourceRepo": "C:/UnrealEngineProjects/Personal",
+  "cities": {
+    "paris": {
+      "cityId": "Paris",
+      "language": "French",
+      "languageCode": "fr",
+      "tagline": "Croissants, cafés and coded whispers.",
+      "usesWordSpacing": true,
+      "allowTypedInput": true,
+      "hasReadings": false,
+      "specialCharacters": "éèêàâçùûîôœ",
+      "languagePackAsset": "/Game/LinguaSpy/Data/French/DA_Lang_French_Paris",
+      "source": "Tools/Content/paris_content.py:167-171 (language_pack(..., allow_typing=True, special_chars=...))"
+    },
+    "tokyo": {
+      "cityId": "Tokyo",
+      "language": "Japanese",
+      "languageCode": "ja",
+      "tagline": "Konbini runs and whispered keigo.",
+      "usesWordSpacing": false,
+      "allowTypedInput": true,
+      "hasReadings": true,
+      "specialCharacters": "",
+      "languagePackAsset": "/Game/LinguaSpy/Data/Japanese/DA_Lang_Japanese_Tokyo",
+      "source": "Tools/Content/tokyo_content.py:77-79 (word_spacing=False, readings=True; allow_typing not set, so bAllowTypedInput keeps its C++ default true, LanguagePackAsset.h:83)"
+    }
+  },
+  "items": [
+    {
+      "id": "/Game/LinguaSpy/Data/French/DA_Conv_Cafe.DA_Conv_Cafe#c_greet#-1",
+      "city": "paris",
+      "npc": "Camille",
+      "scene": "Café terrace - order a coffee",
+      "npcLine": "Bonjour ! Qu'est-ce que je vous sers ?",
+      "npcReading": "",
+      "translation": "Hello! What can I get you?",
+      "intent": "Greet her and politely order a coffee.",
+      "tiles": [{"text": "Bonjour"}, {"text": "je"}, {"text": "voudrais"}, {"text": "un"}, {"text": "café"}, {"text": "s'il"}, {"text": "vous"}, {"text": "plaît"}, {"text": "veux"}, {"text": "thé"}, {"text": "merci"}],
+      "answers": [
+        ["Bonjour", "je", "voudrais", "un", "café", "s'il", "vous", "plaît"],
+        ["Bonjour", "un", "café", "s'il", "vous", "plaît"]
+      ],
+      "skill": "Ordering",
+      "coverPenalty": 12,
+      "gaps": [2, 4],
+      "hints": [
+        {"tokenIndex": 0, "text": "Start with a greeting: Bonjour."},
+        {"tokenIndex": 2, "text": "Polite order: 'je voudrais' (I would like). 'Je veux' (I want) sounds rude to a stranger."},
+        {"tokenIndex": 4, "text": "Coffee is 'café' - tea would be 'thé'."},
+        {"tokenIndex": -1, "text": "Greeting, then what you'd like, then 'please': Bonjour... je voudrais... s'il vous plaît."}
+      ],
+      "recognitionDistractors": [],
+      "asset": "/Game/LinguaSpy/Data/French/DA_Conv_Cafe",
+      "source": "Tools/Content/paris_content.py:27-35"
+    },
+    {
+      "id": "/Game/LinguaSpy/Data/French/DA_Conv_Cafe.DA_Conv_Cafe#c_small_talk#0",
+      "city": "paris",
+      "npc": "Camille",
+      "scene": "Café terrace - order a coffee",
+      "npcLine": "Vous êtes touriste ?",
+      "npcReading": "",
+      "translation": "Are you a tourist?",
+      "intent": "Say: yes, I'm on holiday.",
+      "tiles": [{"text": "Oui"}, {"text": "je"}, {"text": "suis"}, {"text": "en"}, {"text": "vacances"}, {"text": "travail"}, {"text": "non"}],
+      "answers": [
+        ["Oui", "je", "suis", "en", "vacances"]
+      ],
+      "skill": "SmallTalk",
+      "coverPenalty": 12,
+      "gaps": [],
+      "hints": [
+        {"tokenIndex": 0, "text": "'Yes' is 'oui'."},
+        {"tokenIndex": 2, "text": "'I am' = 'je suis'."},
+        {"tokenIndex": -1, "text": "'On holiday' = 'en vacances'."}
+      ],
+      "recognitionDistractors": [],
+      "asset": "/Game/LinguaSpy/Data/French/DA_Conv_Cafe",
+      "source": "Tools/Content/paris_content.py:36-43 (PlayerChoice option 0)"
+    },
+    {
+      "id": "/Game/LinguaSpy/Data/French/DA_Conv_Cafe.DA_Conv_Cafe#c_size#-1",
+      "city": "paris",
+      "npc": "Camille",
+      "scene": "Café terrace - order a coffee",
+      "npcLine": "Très bien. Un grand ou un petit ?",
+      "npcReading": "",
+      "translation": "Very good. A large or a small?",
+      "intent": "Ask for a small one, please.",
+      "tiles": [{"text": "un"}, {"text": "petit"}, {"text": "s'il"}, {"text": "vous"}, {"text": "plaît"}, {"text": "grand"}, {"text": "deux"}],
+      "answers": [
+        ["un", "petit", "s'il", "vous", "plaît"],
+        ["petit", "s'il", "vous", "plaît"]
+      ],
+      "skill": "Ordering",
+      "coverPenalty": 12,
+      "gaps": [],
+      "hints": [
+        {"tokenIndex": 1, "text": "Small = 'petit', large = 'grand'."},
+        {"tokenIndex": -1, "text": "'A small one, please': un petit, s'il vous plaît."}
+      ],
+      "recognitionDistractors": [],
+      "asset": "/Game/LinguaSpy/Data/French/DA_Conv_Cafe",
+      "source": "Tools/Content/paris_content.py:50-54"
+    },
+    {
+      "id": "/Game/LinguaSpy/Data/French/DA_Conv_Cafe.DA_Conv_Cafe#c_thanks#-1",
+      "city": "paris",
+      "npc": "Camille",
+      "scene": "Café terrace - order a coffee",
+      "npcLine": "Voilà ! Bonne journée !",
+      "npcReading": "",
+      "translation": "Here you go! Have a good day!",
+      "intent": "Thank her and wish her a good day too.",
+      "tiles": [{"text": "Merci"}, {"text": "vous"}, {"text": "aussi"}, {"text": "bonne"}, {"text": "journée"}, {"text": "toi"}, {"text": "bonjour"}, {"text": "à"}],
+      "answers": [
+        ["Merci", "vous", "aussi"],
+        ["Merci", "bonne", "journée"],
+        ["Merci", "à", "vous", "aussi"]
+      ],
+      "skill": "Politeness",
+      "coverPenalty": 12,
+      "gaps": [],
+      "hints": [
+        {"tokenIndex": 0, "text": "Start with 'thank you': merci."},
+        {"tokenIndex": -1, "text": "'You too' to a stranger is 'vous aussi' (not 'toi')."}
+      ],
+      "recognitionDistractors": [],
+      "asset": "/Game/LinguaSpy/Data/French/DA_Conv_Cafe",
+      "source": "Tools/Content/paris_content.py:58-63"
+    },
+    {
+      "id": "/Game/LinguaSpy/Data/French/DA_Conv_Kiosk.DA_Conv_Kiosk#v_greet#-1",
+      "city": "paris",
+      "npc": "Marcel",
+      "scene": "Newspaper kiosk - meet the contact",
+      "npcLine": "Bonjour ! Vous cherchez quelque chose ?",
+      "npcReading": "",
+      "translation": "Hello! Are you looking for something?",
+      "intent": "Say hello and ask where the station is.",
+      "tiles": [{"text": "Bonjour"}, {"text": "où"}, {"text": "est"}, {"text": "la"}, {"text": "gare"}, {"text": "s'il"}, {"text": "vous"}, {"text": "plaît"}, {"text": "le"}, {"text": "musée"}, {"text": "qui"}],
+      "answers": [
+        ["Bonjour", "où", "est", "la", "gare"],
+        ["Bonjour", "où", "est", "la", "gare", "s'il", "vous", "plaît"],
+        ["Bonjour", "s'il", "vous", "plaît", "où", "est", "la", "gare"]
+      ],
+      "skill": "Directions",
+      "coverPenalty": 12,
+      "gaps": [1, 4],
+      "hints": [
+        {"tokenIndex": 1, "text": "'Where is...?' = 'Où est...?'"},
+        {"tokenIndex": 4, "text": "The station is 'la gare'."},
+        {"tokenIndex": -1, "text": "Hello, then 'where is the station': Bonjour, où est la gare ?"}
+      ],
+      "recognitionDistractors": [],
+      "asset": "/Game/LinguaSpy/Data/French/DA_Conv_Kiosk",
+      "source": "Tools/Content/paris_content.py:69-76"
+    },
+    {
+      "id": "/Game/LinguaSpy/Data/French/DA_Conv_Kiosk.DA_Conv_Kiosk#v_code#-1",
+      "city": "paris",
+      "npc": "Marcel",
+      "scene": "Newspaper kiosk - meet the contact",
+      "npcLine": "Vous aimez les journaux d'aujourd'hui ?",
+      "npcReading": "",
+      "translation": "Do you like today's newspapers? (That's the code phrase! Reply: 'I prefer yesterday's newspaper.')",
+      "intent": "Give the code reply: 'I prefer yesterday's newspaper.'",
+      "tiles": [{"text": "Je"}, {"text": "préfère"}, {"text": "le"}, {"text": "journal"}, {"text": "d'hier"}, {"text": "aime"}, {"text": "la"}, {"text": "demain"}],
+      "answers": [
+        ["Je", "préfère", "le", "journal", "d'hier"]
+      ],
+      "skill": "Preferences",
+      "coverPenalty": 20,
+      "gaps": [],
+      "hints": [
+        {"tokenIndex": 1, "text": "'I prefer' = 'je préfère' (not 'aime' - that's 'like')."},
+        {"tokenIndex": 4, "text": "'Yesterday's' = 'd'hier' - 'demain' is tomorrow."},
+        {"tokenIndex": -1, "text": "Word by word: I prefer / the newspaper / of yesterday."}
+      ],
+      "recognitionDistractors": [],
+      "asset": "/Game/LinguaSpy/Data/French/DA_Conv_Kiosk",
+      "source": "Tools/Content/paris_content.py:87-95"
+    },
+    {
+      "id": "/Game/LinguaSpy/Data/Japanese/DA_Conv_Konbini.DA_Conv_Konbini#k1#-1",
+      "city": "tokyo",
+      "npc": "Sato",
+      "scene": "Konbini - an onigiri, please",
+      "npcLine": "いらっしゃいませ！",
+      "npcReading": "Irasshaimase!",
+      "translation": "Welcome! (standard shop greeting)",
+      "intent": "Ask for an onigiri (rice ball), please.",
+      "tiles": [{"text": "おにぎり", "reading": "onigiri"}, {"text": "を", "reading": "o"}, {"text": "ください", "reading": "kudasai"}, {"text": "が", "reading": "ga"}, {"text": "パン", "reading": "pan"}, {"text": "です", "reading": "desu"}],
+      "answers": [
+        ["おにぎり", "を", "ください"]
+      ],
+      "skill": "Ordering",
+      "coverPenalty": 34,
+      "gaps": [],
+      "hints": [],
+      "recognitionDistractors": [],
+      "asset": "/Game/LinguaSpy/Data/Japanese/DA_Conv_Konbini",
+      "source": "Tools/Content/tokyo_content.py:25-28"
+    },
+    {
+      "id": "/Game/LinguaSpy/Data/Japanese/DA_Conv_Konbini.DA_Conv_Konbini#k3#-1",
+      "city": "tokyo",
+      "npc": "Sato",
+      "scene": "Konbini - an onigiri, please",
+      "npcLine": "ひゃくごじゅう円です。",
+      "npcReading": "Hyaku gojuu en desu.",
+      "translation": "That's 150 yen.",
+      "intent": "Hand over the money: 'Here you go.'",
+      "tiles": [{"text": "はい", "reading": "hai"}, {"text": "どうぞ", "reading": "douzo"}, {"text": "いいえ", "reading": "iie"}, {"text": "ください", "reading": "kudasai"}],
+      "answers": [
+        ["はい", "どうぞ"],
+        ["どうぞ"]
+      ],
+      "skill": "Shopping",
+      "coverPenalty": 34,
+      "gaps": [],
+      "hints": [],
+      "recognitionDistractors": [],
+      "asset": "/Game/LinguaSpy/Data/Japanese/DA_Conv_Konbini",
+      "source": "Tools/Content/tokyo_content.py:35-37"
+    },
+    {
+      "id": "/Game/LinguaSpy/Data/Japanese/DA_Conv_Tokyo_Tanaka.DA_Conv_Tokyo_Tanaka#s1#-1",
+      "city": "tokyo",
+      "npc": "Tanaka",
+      "scene": "Street - where is the station?",
+      "npcLine": "どうしましたか？",
+      "npcReading": "Dou shimashita ka?",
+      "translation": "What's the matter? / Can I help?",
+      "intent": "Excuse yourself and ask where the station is.",
+      "tiles": [{"text": "すみません", "reading": "sumimasen"}, {"text": "駅", "reading": "eki"}, {"text": "は", "reading": "wa"}, {"text": "どこ", "reading": "doko"}, {"text": "ですか", "reading": "desu ka"}, {"text": "を", "reading": "o"}, {"text": "なに", "reading": "nani"}],
+      "answers": [
+        ["すみません", "駅", "は", "どこ", "ですか"],
+        ["駅", "は", "どこ", "ですか"]
+      ],
+      "skill": "Directions",
+      "coverPenalty": 34,
+      "gaps": [],
+      "hints": [],
+      "recognitionDistractors": [],
+      "asset": "/Game/LinguaSpy/Data/Japanese/DA_Conv_Tokyo_Tanaka",
+      "source": "Tools/Content/tokyo_content.py:42-45"
+    },
+    {
+      "id": "/Game/LinguaSpy/Data/Japanese/DA_Conv_Tokyo_Yuki.DA_Conv_Tokyo_Yuki#y1#-1",
+      "city": "tokyo",
+      "npc": "Yuki",
+      "scene": "Shrine - the contact",
+      "npcLine": "さくらが きれいですね。",
+      "npcReading": "Sakura ga kirei desu ne.",
+      "translation": "The cherry blossoms are pretty, aren't they? (Code! Reply: 'Yes, but they fall quickly.')",
+      "intent": "Give the code reply: 'Yes, but they fall quickly.'",
+      "tiles": [{"text": "はい", "reading": "hai"}, {"text": "でも", "reading": "demo"}, {"text": "すぐ", "reading": "sugu"}, {"text": "ちります", "reading": "chirimasu"}, {"text": "いいえ", "reading": "iie"}, {"text": "ゆっくり", "reading": "yukkuri"}, {"text": "さきます", "reading": "sakimasu"}],
+      "answers": [
+        ["はい", "でも", "すぐ", "ちります"]
+      ],
+      "skill": "Code",
+      "coverPenalty": 45,
+      "gaps": [],
+      "hints": [],
+      "recognitionDistractors": [],
+      "asset": "/Game/LinguaSpy/Data/Japanese/DA_Conv_Tokyo_Yuki",
+      "source": "Tools/Content/tokyo_content.py:54-59"
+    }
+  ]
+}

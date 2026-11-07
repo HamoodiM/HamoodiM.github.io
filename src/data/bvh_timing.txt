@@ -1,0 +1,21 @@
+bvh_bench 512 -- Intel Core i5-14400F, Windows 11, single thread, wasm32-wasi (zig 0.16 / clang 21, -O2) under Node 24.20.0, 2026-11-07
+
+| triangles | SAH build (ms) | BVH nodes | BVH SAH (Mrays/s) | BVH midpoint (Mrays/s) | brute force (Mrays/s) | brute rays | speed-up SAH vs brute |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 128 | 0.7 | 123 | 8.015 | 8.422 | 0.97074 | 16384 | 8x |
+| 1058 | 1.4 | 1125 | 5.340 | 3.953 | 0.08136 | 16384 | 66x |
+| 8192 | 14.7 | 8805 | 3.055 | 2.833 | 0.00982 | 16384 | 311x |
+| 32768 | 48.5 | 35681 | 2.860 | 2.238 | 0.00238 | 12207 | 1202x |
+| 131072 | 244.2 | 142811 | 1.703 | 1.546 | 0.00048 | 3051 | 3513x |
+| 524288 | 1070.7 | 570307 | 1.543 | 1.393 | 0.00013 | 762 | 11585x |
+
+0 mismatches between BVH and brute-force hit distances
+
+End to end: scenes/hero_knot.json, 320x180, 4 spp, depth 50, RR 3
+scene scenes/hero_knot.json: 17285 objects, 2 lights; BVH sah (17284 prims, 19925 nodes, depth 17)
+render 320x180, 4 spp, depth 50, RR 3, threads 1
+load+build 0.124 s, render 0.48 s, wrote renders/work/e2e_bvh.png
+scene scenes/hero_knot.json: 17285 objects, 2 lights; BVH off (17284 prims, 19925 nodes, depth 17)
+render 320x180, 4 spp, depth 50, RR 3, threads 1
+load+build 0.132 s, render 158.73 s, wrote renders/work/e2e_nobvh.png
+Output images byte-identical: yes (cmp)

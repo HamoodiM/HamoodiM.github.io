@@ -1,0 +1,31 @@
+---
+// Top of a project page: title and media carry view-transition names that match the home index,
+// so the card morphs into the page in browsers with cross-document view transitions.
+import { url } from '../data/site';
+interface Props { slug: string; title: string; lede: string }
+const { slug, title, lede } = Astro.props;
+---
+<header class="ph">
+  <div class="wrap">
+    <p class="ph__back"><a href={url('#work')}>All work</a></p>
+    <h1 class="ph__title" style={`view-transition-name: vt-${slug}-title`}>{title}</h1>
+    <p class="ph__lede">{lede}</p>
+  </div>
+  <div class="wrap ph__media" style={`view-transition-name: vt-${slug}-media`}>
+    <slot name="media" />
+  </div>
+  <div class="wrap ph__tldr">
+    <slot />
+  </div>
+</header>
+
+<style>
+  .ph { padding-block: clamp(1.5rem, 4vw, 3rem) clamp(2rem, 5vw, 3.5rem); }
+  .ph__back { font-size: var(--step--1); margin-bottom: clamp(1rem, 3vw, 2rem); }
+  .ph__title { font-size: clamp(2.8rem, 1rem + 8vw, 7rem); }
+  .ph__lede { font-family: var(--font-display); font-size: var(--step-2); line-height: 1.25; max-width: 44rem; margin-top: 1.25rem; letter-spacing: -0.01em; }
+  .ph__media { margin-top: clamp(1.5rem, 4vw, 2.5rem); }
+  .ph__media > :global(*) { max-width: 60rem; }
+  .ph__tldr { margin-top: clamp(1.5rem, 4vw, 2.5rem); }
+  @media (max-width: 40rem) { .ph__lede { font-size: 1.25rem; } }
+</style>

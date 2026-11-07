@@ -1,0 +1,69 @@
+---
+// Scroll-scrubbed convergence: the hero scene at 1 to 256 samples per pixel. Frames are cut from
+// renders/progressive.mp4 (WebAssembly build, one thread), captions cropped off.
+import { Image } from 'astro:assets';
+interface Props { scrub?: boolean }
+const { scrub = false } = Astro.props;
+const files = import.meta.glob<{ default: ImageMetadata }>('../assets/raytracer/prog/spp*.png', { eager: true });
+const frames = Object.entries(files)
+  .map(([k, v]) => ({ spp: parseInt(k.match(/spp(\d+)/)![1], 10), img: v.default }))
+  .sort((a, b) => a.spp - b.spp);
+const last = frames.length - 1;
+---
+<div class="converge" data-island="converge" data-scrub={scrub ? '' : undefined}>
+  <div class="converge__stick">
+    <figure class="converge__fig">
+      <div class="converge__frames">
+        {frames.map((f, i) => (
+          <Image
+            src={f.img}
+            alt={i === last ? 'The materials scene at 256 samples per pixel: smooth shading, clean glass and metal reflections.' : ''}
+            aria-hidden={i === last ? undefined : 'true'}
+            widths={[480, 960]}
+            sizes="(min-width: 60rem) 60rem, 100vw"
+            loading="lazy"
+            decoding="async"
+            class="converge__frame"
+            data-spp={f.spp}
+            data-active={i === last ? '' : undefined}
+          />
+        ))}
+      </div>
+      <figcaption class="converge__cap">
+        <span class="converge__spp" data-spp-readout aria-hidden="true">{frames[last].spp}<small> spp</small></span>
+        <span class="converge__text">Each pass adds one random light path per pixel and averages it in. The noise falls off roughly as one over the square root of the sample count, so 4 spp has half the noise of 1 spp, and 256 has a sixteenth.</span>
+      </figcaption>
+    </figure>
+    <label class="converge__control">
+      <span>Samples per pixel</span>
+      <input type="range" min="0" max={last} step="1" value={last} data-spp-range aria-valuetext={`${frames[last].spp} samples per pixel`} />
+    </label>
+  </div>
+</div>
+
+<style>
+  .converge { position: relative; }
+  .converge__stick { display: grid; gap: 1rem; }
+  .converge__fig { width: min(100%, calc((100svh - var(--bar-h) - 12rem) * 960 / 486)); min-width: min(100%, 20rem); }
+  .converge__frames { position: relative; aspect-ratio: 960 / 486; background: #2c313b; overflow: hidden; }
+  .converge__frames :global(.converge__frame) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+  .converge__frames :global(.converge__frame[data-active]) { opacity: 1; }
+  .converge__cap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.25rem; align-items: baseline; margin-top: 0.75rem; }
+  .converge__spp { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--step-3); min-width: 4.2ch; text-align: right; line-height: 1; }
+  .converge__spp small { font-size: 0.45em; color: var(--ink-2); }
+  .converge__text { color: var(--ink-2); font-size: var(--step--1); max-width: 40rem; }
+  .converge__control { display: none; gap: 0.75rem; align-items: center; font-size: var(--step--1); }
+  :global(html.js) .converge__control { display: flex; }
+  .converge__control input { flex: 1; max-width: 26rem; accent-color: var(--emit-ink); }
+
+  /* Scroll-scrubbed variant: the frame sticks while the page scrolls 1.2 viewports. */
+  :global(html[data-motion='on']) .converge[data-scrub] { height: calc(100svh + 120svh); }
+  :global(html[data-motion='on']) .converge[data-scrub] .converge__stick {
+    position: sticky;
+    top: calc(var(--bar-h) + 1rem);
+  }
+  @media (max-width: 40rem) {
+    .converge__cap { grid-template-columns: 1fr; gap: 0.5rem; }
+    .converge__spp { text-align: left; }
+  }
+</style>

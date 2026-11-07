@@ -1,0 +1,47 @@
+---
+import ConvergeScrub from './ConvergeScrub.astro';
+import BeforeAfter from './BeforeAfter.astro';
+import BvhChart from './BvhChart.astro';
+import { url, RT_REPO } from '../data/site';
+---
+<section class="ch-rt" id="raytracer" aria-labelledby="rt-h">
+  <div class="wrap">
+    <header class="ch-rt__head">
+      <h2 id="rt-h" data-reveal>Raytracer</h2>
+      <div class="ch-rt__intro prose">
+        <p>The image at the top of this page comes from my CPU path tracer in C++17. It started from Peter Shirley's <cite>Ray Tracing in One Weekend</cite>, and I added triangles, light sampling, normal maps, JSON scenes and a progressive viewer. In November I went back to fix the bugs a code review turned up and to build what the old README claimed but the code didn't have: a BVH, OpenMP rendering and Russian roulette.</p>
+      </div>
+    </header>
+
+    <div class="ch-rt__block">
+      <h3>Converging</h3>
+      <p class="prose muted">Scroll, or drag the slider: the same scene from 1 to 256 samples per pixel.</p>
+      <ConvergeScrub scrub />
+    </div>
+
+    <div class="ch-rt__block">
+      <h3>Three of the fixes, side by side</h3>
+      <p class="prose muted">Drag across the image. Each pair is the same scene rendered from the commit before and the commit after the fix.</p>
+      <BeforeAfter />
+    </div>
+
+    <div class="ch-rt__block">
+      <h3>The BVH, measured</h3>
+      <p class="prose">The old BVH was a stub whose <code>hit()</code> returned false, so every ray tested every object. The new one bins primitive centroids into 16 buckets per axis, picks the split with the lowest surface-area cost, stores the tree in one flat array and walks it near child first.</p>
+      <BvhChart />
+    </div>
+
+    <p class="ch-rt__links">
+      <a href={url('projects/raytracer/')}>Read the full write-up: each fix and the maths behind it</a>
+      <a href={RT_REPO}>Source on GitHub</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .ch-rt { padding-block: clamp(3rem, 7vw, 6rem); border-top: 1px solid var(--rule); }
+  .ch-rt__head { display: grid; gap: 1.25rem; margin-bottom: clamp(2rem, 5vw, 3.5rem); }
+  .ch-rt__block { display: grid; gap: 0.9rem; margin-top: clamp(3rem, 7vw, 5rem); }
+  .ch-rt__block:first-of-type { margin-top: 0; }
+  .ch-rt__links { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; margin-top: 3rem; font-weight: 600; }
+</style>

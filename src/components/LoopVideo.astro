@@ -1,0 +1,31 @@
+---
+// Muted loop. Without JS it is a normal video with controls. With JS (and motion on) it plays only
+// while on screen, and a visible Pause button covers WCAG 2.2.2.
+import { getImage } from 'astro:assets';
+interface Props { src: string; poster: ImageMetadata; label: string; caption: string; width?: number; height?: number; id?: string }
+const { src, poster, label, caption, width = 960, height = 540, id } = Astro.props;
+const p = await getImage({ src: poster, width: 960, format: 'webp', quality: 72 });
+---
+<figure class="loop" data-island="video" id={id}>
+  <div class="loop__frame">
+    <video class="loop__video" muted loop playsinline controls preload="none" width={width} height={height} poster={p.src} aria-label={label}>
+      <source src={src} type="video/mp4" />
+    </video>
+    <button class="loop__btn" type="button" hidden data-loop-btn>Play video</button>
+  </div>
+  <figcaption class="loop__cap small">{caption}</figcaption>
+</figure>
+
+<style>
+  .loop { display: grid; gap: 0.5rem; }
+  .loop__frame { position: relative; }
+  .loop__video { width: 100%; height: auto; aspect-ratio: 16 / 9; background: #222; }
+  .loop__btn {
+    position: absolute; left: 0.6rem; bottom: 0.6rem;
+    font: inherit; font-size: 0.8rem;
+    background: rgba(20, 22, 27, 0.82); color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 2px;
+    padding: 0.3rem 0.6rem; cursor: pointer;
+  }
+  .loop__cap { opacity: 0.85; max-width: 46rem; }
+</style>

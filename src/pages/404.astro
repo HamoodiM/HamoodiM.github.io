@@ -1,0 +1,10 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../data/site';
+---
+<Base title="Page not found, Mohammad Mohammad" description="This page does not exist." noindex page="404">
+  <section class="wrap section prose">
+    <h1>Not found</h1>
+    <p>Nothing lives at this address. The <a href={url()}>home page</a> has every project, the résumé and my email.</p>
+  </section>
+</Base>

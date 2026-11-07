@@ -1,0 +1,325 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProjectHead from '../../components/ProjectHead.astro';
+import CodeFigure from '../../components/CodeFigure.astro';
+import BeforeAfter from '../../components/BeforeAfter.astro';
+import BvhChart from '../../components/BvhChart.astro';
+import ConvergeScrub from '../../components/ConvergeScrub.astro';
+import { Image } from 'astro:assets';
+import '../../styles/project.css';
+import { url, RESUME, RT_REPO, rtCommit } from '../../data/site';
+import cornell from '../../assets/raytracer/hero_cornell.png';
+import knot from '../../assets/raytracer/hero_knot.png';
+import materials from '../../assets/raytracer/hero_materials.png';
+import nmapFinal from '../../assets/raytracer/nmap_final.png';
+
+const BR = `${RT_REPO}/blob/portfolio-fixes/`;
+const OLD = `${RT_REPO}/blob/b79885c7bbb59f0ca26702afc4524f9ee90353e8/`;
+
+const rngOld = `
+float random_float(float min, float max) {
+    static std::uniform_real_distribution<float> distribution(min, max);
+    static std::mt19937 generator;
+    return distribution(generator);
+}`;
+const rngNew = `
+// One engine per thread. Only the engine is persistent: the [min, max)
+// range is applied on every call (a static distribution object would keep
+// the range of the first call).
+thread_local Pcg32 tls_rng;
+...
+// Uniform float in [min, max). The range is applied on every call.
+float random_float(float min, float max) {
+    // 24 random bits -> exactly representable float in [0, 1)
+    float unit = static_cast<float>(tls_rng.next() >> 8) * (1.0f / 16777216.0f);
+    return min + (max - min) * unit;
+}`;
+const direct = `
+    const float inv_pi = 1.0f / glm::pi<float>();
+    const Color brdf = albedo * inv_pi;
+    Color direct(0.0f);
+
+    for (const auto& light : scene.lights()) {
+        auto sample = light->sample(rec.point);
+        if (!(sample.pdf > 0.0f)) continue;
+
+        float cos_theta = glm::dot(shading_normal, sample.direction);
+        // Skip lights behind the shading normal or behind the actual surface
+        if (cos_theta <= 0.0f || glm::dot(rec.geometric_normal, sample.direction) <= 0.0f) continue;
+
+        // Shadow ray
+        core::Ray shadow_ray(rec.point, sample.direction);
+        geometry::HitRecord shadow_rec;
+        if (scene.hit(shadow_ray, 0.001f, sample.distance - 0.001f, shadow_rec)) continue;
+
+        direct += brdf * sample.radiance * cos_theta / sample.pdf;
+    }`;
+const loop = `
+        const materials::Material& material = *rec.material;
+        if (count_light_emission || !material.emission_sampled_by_lights())
+            radiance += throughput * material.emit();
+        ...
+        if (material.diffuse_brdf(rec, albedo, shading_normal)) {
+            radiance += throughput * direct_lighting(rec, albedo, shading_normal, scene);
+            count_light_emission = false;
+        } else {
+            count_light_emission = true;
+        }
+
+        throughput *= attenuation;
+        ray = scattered;
+
+        if (rr_start_ > 0 && depth + 1 >= rr_start_) {
+            float p = glm::min(glm::max(throughput.r, glm::max(throughput.g, throughput.b)), 0.95f);
+            if (core::random_float() >= p)
+                break;
+            throughput /= p;
+        }`;
+const sah = `
+            for (int i = 0; i < kBins - 1; ++i) {
+                if (left_count[i] == 0 || right_count[i] == 0) continue;
+                float cost = 1.0f + (left_area[i] * left_count[i] + right_area[i] * right_count[i]) /
+                                        node_area;
+                if (cost < best_cost) {
+                    best_cost = cost;
+                    best_axis = a;
+                    best_split = i;
+                }
+            }`;
+const trav = `
+    while (sp > 0) {
+        const Node& node = nodes_[stack[--sp]];
+        if (!slab_hit(node.bmin, node.bmax, origin, inv_dir, t_min, closest)) continue;
+
+        if (node.count > 0) {
+            for (uint32_t i = 0; i < node.count; ++i) {
+                if (prims_[node.first + i]->hit(ray, t_min, closest, temp)) {
+                    hit_anything = true;
+                    closest = temp.t;
+                    rec = temp;
+                }
+            }
+        } else {
+            // Push the far child first so the near child is popped next; a
+            // near hit then shrinks 'closest' and lets the far box be culled.
+            uint32_t near_child = node.first, far_child = node.first + 1;
+            if (dir_neg[node.axis]) std::swap(near_child, far_child);
+            stack[sp++] = far_child;
+            stack[sp++] = near_child;
+        }
+    }`;
+const omp = `
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic, 1)
+#endif
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            core::seed_rng_for_pixel(x, y, 0, seed_);`;
+const tri = `
+bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& rec) const {
+    // Möller-Trumbore algorithm
+    Vec3 edge1 = v1_ - v0_;
+    Vec3 edge2 = v2_ - v0_;
+    Vec3 h = glm::cross(ray.direction(), edge2);
+    float a = glm::dot(edge1, h);
+
+    // Ray is parallel to triangle
+    if (a > -1e-8f && a < 1e-8f) {
+        return false;
+    }
+
+    float f = 1.0f / a;
+    Vec3 s = ray.origin() - v0_;
+    float u = f * glm::dot(s, h);
+
+    if (u < 0.0f || u > 1.0f) {
+        return false;
+    }
+
+    Vec3 q = glm::cross(s, edge1);
+    float v = f * glm::dot(ray.direction(), q);
+
+    if (v < 0.0f || u + v > 1.0f) {
+        return false;
+    }
+
+    float t = f * glm::dot(edge2, q);
+
+    if (t < t_min || t > t_max) {
+        return false;
+    }`;
+---
+<Base
+  title="Raytracer, Mohammad Mohammad"
+  description="A CPU Monte Carlo path tracer in C++17 with next-event estimation, Russian roulette, a binned-SAH BVH and OpenMP. Five bug fixes with before/after renders, and measured BVH timings."
+  ogImage={cornell}
+  page="raytracer"
+>
+  <ProjectHead slug="raytracer" title="Raytracer" lede="A CPU path tracer in C++17. It renders JSON scenes from the command line or progressively in a window you can fly around, and it runs in your browser at the top of my home page.">
+    <figure slot="media" class="rt-media">
+      <Image src={cornell} alt="Cornell box rendered by the path tracer: red and green walls with colour bleeding, a glass sphere and a gold sphere, under a visible area light." widths={[480, 640]} sizes="(min-width: 50rem) 36rem, 100vw" loading="eager" class="rt-media__main" />
+      <figcaption class="small muted"><code>hero_cornell.json</code>, 640×640, 1024 spp. The bright speckles left are caustic paths (wall, then glass or metal, then the light), which this integrator only finds by chance because it has no multiple importance sampling.</figcaption>
+    </figure>
+    <div class="tldr">
+      <dl class="facts">
+        <dt>Role</dt><dd>Solo</dd>
+        <dt>Dates</dt><dd>Oct 21–22, 2025 (3 commits); fixes, BVH, OpenMP and the WebAssembly build in Nov 2026 on the <code>portfolio-fixes</code> branch</dd>
+        <dt>Language</dt><dd>C++17 with CMake</dd>
+        <dt>Libraries</dt><dd>GLM (vendored), GLFW and OpenGL for the viewer, nlohmann/json for scenes, stb_image for textures</dd>
+        <dt>Based on</dt><dd><cite>Ray Tracing in One Weekend</cite> series (Peter Shirley and contributors)</dd>
+        <dt>Code</dt><dd><a href={RT_REPO}>github.com/HamoodiM/Raytracer</a></dd>
+      </dl>
+      {/* TODO-USER: the git history only covers Oct 21-22, 2025, while the old resume said Dec 2024. If you worked on it earlier outside git, say so here in one line; otherwise keep these dates and fix the resume. */}
+      {/* TODO-USER: merge portfolio-fixes into main and push before publishing. The commit links and "portfolio-fixes" file links on this page only resolve after the push. */}
+      <div>
+        <h2>Worth a look</h2>
+        <ul>
+          <li><a href="#rng">The random-number bug</a>: one <code>static</code> that froze every sample into one octant.</li>
+          <li><a href="#bvh">The BVH</a>: binned SAH, flat array, near child first, and the measured speed-up.</li>
+          <li><a href="#nee">Light sampling done right</a>: the missing 1/π and the double counting.</li>
+        </ul>
+        <p class="tldr__links"><a href={RESUME}>Résumé (PDF)</a><a href={url('#raytracer')}>Live render on the home page</a></p>
+      </div>
+    </div>
+  </ProjectHead>
+
+  <div class="longform">
+    <div class="wrap prose">
+      <p>I started from Peter Shirley's <a href="https://raytracing.github.io/"><cite>Ray Tracing in One Weekend</cite></a> series, and the camera, the <code>scatter()</code> material interface, the Lambertian, metal and dielectric materials and the sampling helpers follow it closely. I extended it with planes and triangles, explicit sampling of point and area lights, normal maps, JSON scene files and an interactive progressive viewer.</p>
+      {/* TODO-USER: check the "extended with" list against what you remember adding yourself, and adjust. */}
+      <p>A year later a code review of the repo found bugs in the sampling and shading, and found that the README claimed a BVH, OpenMP and Russian roulette that the code didn't have. This page is about fixing that: what was wrong, why it showed up in the image, and how I checked the fix.</p>
+
+      <h2>What it does now</h2>
+      <ul>
+        <li>Iterative path tracing with next-event estimation: one shadow-ray sample per light at each diffuse hit, with the Lambertian BRDF albedo/π, and emission counted only where light sampling didn't already account for it.</li>
+        <li>Russian roulette after 3 bounces, with the survival probability set from the path throughput and capped at 0.95.</li>
+        <li>Materials: Lambertian (cosine-weighted bounce), textured Lambertian with a tangent-space normal map, metal with fuzz, dielectric (Snell refraction, total internal reflection, Schlick Fresnel), emissive.</li>
+        <li>Spheres, infinite planes, Möller-Trumbore triangles and Wavefront OBJ meshes, smooth-shaded from vertex normals when the scene asks for it.</li>
+        <li>A bounding volume hierarchy built with a 16-bin surface area heuristic, stored as one flat node array and traversed iteratively, near child first.</li>
+        <li>OpenMP over image rows, with a <code>thread_local</code> PCG32 generator reseeded per pixel, so the image doesn't depend on the thread count.</li>
+        <li>A headless command-line renderer (PNG or PPM, progressive snapshots), the GLFW viewer, and a wasm32-wasi build. The browser version on my home page is that same C++, one instance per Web Worker.</li>
+      </ul>
+    </div>
+
+    <div class="wrap wide">
+      <ConvergeScrub />
+    </div>
+
+    <div class="wrap prose">
+      <h2>Fixes</h2>
+      <p>Every before/after pair below is the same scene rendered from the commit before and the commit after the fix, with the headless renderer compiled to WebAssembly. Old commits only had the viewer, so they were rendered through a small driver that calls their own scene loader, camera and renderer.</p>
+    </div>
+
+    <div class="wrap wide">
+      <BeforeAfter />
+    </div>
+
+    <div class="wrap prose">
+      <h3 id="rng">The random number range was frozen by a <code>static</code></h3>
+      <p class="status status--fixed">Fixed in <a href={rtCommit('351cc245bb9c3af6b87bf8f677f326516da21615')}><code>351cc24</code></a></p>
+      <p>A function-local <code>static</code> is initialised once, the first time control passes through it. The distribution object stores its range, so it kept the <code>min</code> and <code>max</code> of the first call forever. The first call in a render is <code>random_float()</code> for pixel jitter, so the range was frozen at [0, 1), and every later <code>random_float(-1, 1)</code> silently returned [0, 1). <code>random_int</code> had the same problem.</p>
+      <CodeFigure href={`${OLD}src/core/utils.cpp#L8-L12`} file="src/core/utils.cpp (before)" lines="8–12" code={rngOld} />
+      <p>Three things are built from <code>random_float(-1, 1)</code> by rejection sampling: points in the unit sphere, points in the unit disk and unit vectors. All three came from one octant or quadrant. The Lambertian bounce is <code>n + random_unit_vector()</code>, which is cosine-weighted only if the unit vector is uniform over the whole sphere, so indirect light came from one side. Metal fuzz spread over an eighth of the ball, and the depth-of-field lens offset covered a quarter of the aperture.</p>
+      <p>Now only the engine is persistent and the range is applied on every call. Using 24 random bits means every value is exactly representable as a float, so the result never rounds up to <code>max</code>.</p>
+      <CodeFigure href={`${BR}src/core/utils.cpp#L31-L59`} file="src/core/utils.cpp (after)" lines="31–59, condensed" code={rngNew} />
+
+      <h3>The TBN matrix was transposed</h3>
+      <p class="status status--fixed">Fixed in <a href={rtCommit('3c6446ad919773c251b6b770217e8503f968a379')}><code>3c6446a</code></a></p>
+      <p>GLM matrices are column-major: the nine-float constructor fills column 0 first. Typing T, B and N in component by component built a matrix whose rows were T, B and N, which is the world-to-tangent transform. Even an unperturbed normal (0, 0, 1) came out as (T.z, B.z, N.z) instead of N. The fix is <code>glm::mat3(rec.tangent, rec.bitangent, rec.normal)</code>, three column vectors.</p>
+
+      <h3>Area lights were offset by half their size</h3>
+      <p class="status status--fixed">Fixed in <a href={rtCommit('8d651dda85d2e5dd11885cb67243c708f815a3ab')}><code>8d651dd</code></a></p>
+      <p>The light stores a centre and two edge vectors but sampled <code>center + s·u + t·v</code> with s and t in [0, 1), so the light sat (u + v) / 2 away from where the scene file put it. Sampling s and t in [-0.5, 0.5) fixes it, and the pdf doesn't change because the area is the same.</p>
+
+      <h3 id="nee">Direct light: the missing 1/π, and only for diffuse surfaces</h3>
+      <p class="status status--fixed">Fixed in <a href={rtCommit('704fd0ca8a642dac761d417c7f43f36d5b3f4a62')}><code>704fd0c</code></a></p>
+      <p>Next-event estimation estimates the direct part of the rendering equation with one light sample: L ≈ f · L<sub>e</sub> · cos θ / p. For a Lambertian surface f = albedo / π. The old code computed albedo · L · cos / p, which is π times too bright. It also added that term for mirrors, glass and fuzzy metal. Their BRDF is a delta (or, for fuzzy metal, one this code can't evaluate), so a random light sample contributes nothing and their light has to come from the scattered ray. The term made glass and chrome look partly matte.</p>
+      <CodeFigure href={`${BR}src/rendering/integrator.cpp#L19-L37`} file="src/rendering/integrator.cpp" lines="19–37" code={direct} />
+
+      <h3>Light counted twice</h3>
+      <p class="status status--fixed">Fixed in <a href={rtCommit('f61545164675e13704b665e30a7db43ea0b18449')}><code>f615451</code></a></p>
+      <p>At every diffuse hit the integrator sampled the lights and also followed a bounce ray, adding the emission of whatever it hit. If an emitter is both scene geometry and a sampled light, it gets counted by both. None of the shipped scenes had a light with visible geometry, so this one didn't change any pixels, but it would have as soon as one did. The integrator is now a loop with a path throughput and a flag: after a diffuse vertex that sampled the lights, emission from light-sampled emitters is skipped; after a camera ray, mirror or glass it is counted. Multiple importance sampling would weight both strategies instead of switching one off, but it needs a pdf for every material; the flag is the textbook first step and stays unbiased.</p>
+      <CodeFigure href={`${BR}src/rendering/integrator.cpp#L61-L94`} file="src/rendering/integrator.cpp" lines="61–94, condensed" code={loop} />
+
+      <h3>Russian roulette</h3>
+      <p class="status status--fixed">Added in <a href={rtCommit('ab74a56b7449809427273a4d15ca7558f5aa1439')}><code>ab74a56</code></a></p>
+      <p>After 3 bounces the path continues with probability p = min(max(throughput.r, .g, .b), 0.95), and if it continues the throughput is divided by p. If X is the rest of the path's contribution, the estimator is X / p with probability p and 0 otherwise, so its expected value is still X. Dim paths stop early, and the cap keeps bright paths from running forever; the depth limit of 50 stays as a hard stop.</p>
+
+      <h2 id="bvh">The BVH</h2>
+      <p class="status status--fixed">Added in <a href={rtCommit('c1ddbc5ff6deb9b6c60d8a0eef2e79a220d6318e')}><code>c1ddbc5</code></a></p>
+      <p>The old <code>BVHNode::hit()</code> returned false, no bounding boxes were computed and nothing used the class, so every ray tested every object. Now every bounded primitive returns an AABB (infinite planes stay in a short list that's tested linearly), and the tree is built top-down. For each node, the primitive centroids go into 16 bins per axis, and each of the 15 boundaries is scored with the surface area heuristic:</p>
+      <p class="formula">cost = 1 + (A<sub>L</sub> · N<sub>L</sub> + A<sub>R</sub> · N<sub>R</sub>) / A<sub>node</sub></p>
+      <p>A<sub>L</sub> / A<sub>node</sub> is the chance that a ray hitting the node also hits the left box, so the cost is the expected work for one ray. The cheapest split wins, and a node becomes a leaf (at most 4 primitives) when splitting isn't cheaper than testing everything in it.</p>
+      <CodeFigure href={`${BR}src/acceleration/bvh.cpp#L137-L146`} file="src/acceleration/bvh.cpp" lines="137–146" code={sah} />
+      <p>The nodes live in one flat <code>std::vector</code>, and a node's two children are adjacent so it stores one index. Traversal uses a fixed stack, clips each slab test against the closest hit so far, and visits the child nearer along the ray first, so far boxes are often culled.</p>
+      <CodeFigure href={`${BR}src/acceleration/bvh.cpp#L200-L221`} file="src/acceleration/bvh.cpp" lines="200–221" code={trav} />
+      <p>To check it, <code>tests/bvh_test.cpp</code> builds random scenes (triangles of mixed sizes, spheres, axis-aligned triangles, a plane) and fires 200,000 rays, including rays that start inside the scene and shadow rays with a finite <code>t_max</code>. BVH and brute force must agree on hit or miss, distance and which primitive was hit, for both SAH and midpoint builds. They do: 0 mismatches.</p>
+    </div>
+
+    <div class="wrap wide">
+      <BvhChart openTable />
+    </div>
+
+    <div class="wrap prose">
+      <h2>OpenMP and per-thread random numbers</h2>
+      <p class="status status--fixed">Added in <a href={rtCommit('42267be64f6d5652e5223b1606a916094898c6b5')}><code>42267be</code></a></p>
+      <p>CMake found OpenMP and added the flags, but no loop used it. The row loops now run with <code>schedule(dynamic, 1)</code>, because rows through glass and metal take longer than sky rows. The single shared <code>mt19937</code> would have been a data race, so the engine is a <code>thread_local</code> PCG32 reseeded for every pixel from a hash of (x, y, pass, seed). Every pixel gets the same random numbers whichever thread renders it, so the image is the same for any thread count.</p>
+      <CodeFigure href={`${BR}src/rendering/renderer.cpp#L33-L38`} file="src/rendering/renderer.cpp" lines="33–38" code={omp} />
+      <p>All renders and timings on this page come from the single-threaded WebAssembly build, so I haven't measured the OpenMP speed-up on this machine yet. The browser version gets its parallelism differently: each Web Worker runs its own instance on interleaved rows, and because pixels are seeded per pixel and pass, the result is bit-identical to the command-line renderer.</p>
+
+      <h2>Ray-triangle intersection</h2>
+      <p>Triangles use the Möller-Trumbore test. It solves for the hit distance <code>t</code> and the barycentric coordinates <code>u</code> and <code>v</code> directly with two cross products and a few dot products, without first intersecting the triangle's plane. Each early return rejects a case: the ray parallel to the triangle, <code>u</code> or <code>v</code> outside the triangle, or <code>t</code> outside the valid range. Smooth shading reuses the same <code>u</code> and <code>v</code> to interpolate vertex normals.</p>
+      <CodeFigure href={`${OLD}src/geometry/triangle.cpp#L8-L39`} file="src/geometry/triangle.cpp" lines="8–39" code={tri} />
+    </div>
+
+    <div class="wrap wide">
+      <div class="shots">
+        <figure>
+          <Image src={materials} alt="Five spheres on a checkerboard: matte red, normal-mapped brick, glass, gold and chrome, with two glowing spheres in front." widths={[480, 960]} sizes="(min-width: 44rem) 36rem, 100vw" loading="lazy" />
+          <figcaption>Materials: Lambertian, normal-mapped brick, glass, gold, chrome, two emissive spheres and depth of field. 960×540, 1024 spp.</figcaption>
+        </figure>
+        <figure>
+          <Image src={knot} alt="A gold torus knot made of 17,280 triangles floating over a checkerboard, with glass, mirror, brick and blue spheres around it." widths={[480, 960]} sizes="(min-width: 44rem) 36rem, 100vw" loading="lazy" />
+          <figcaption>A 17,280-triangle torus knot in the BVH, with glass, mirror and normal-mapped spheres. 960×540, 512 spp.</figcaption>
+        </figure>
+        <figure>
+          <Image src={nmapFinal} alt="Normal-mapped brick spheres after all fixes, with the bevels lit from the correct side." widths={[480, 960]} sizes="(min-width: 44rem) 36rem, 100vw" loading="lazy" />
+          <figcaption>Normal-map test with all fixes: direct light now uses the normal-mapped normal too.</figcaption>
+        </figure>
+      </div>
+      {/* TODO-USER: these renders were copied from projects/Raytracer/renders on 2026-11-07. The branch has since gained a re-rendered hero_knot (smooth-shaded copper); copy the new file into src/assets/raytracer/ if you prefer it. */}
+    </div>
+
+    <div class="wrap prose">
+      <h2>Still open</h2>
+      <ul>
+        <li>No multiple importance sampling, so caustics and small emitters that aren't registered lights are noisy at low sample counts.</li>
+        <li><code>Mesh::hit</code> is a stub; OBJ files load as individual triangles instead.</li>
+        <li>Tangent frames aren't consistent between primitives: normal maps on planes have their green channel flipped.</li>
+        <li><code>ImageTexture</code> clamps UVs instead of wrapping, and its raw-data constructor allocates with <code>new[]</code> while the destructor calls <code>stbi_image_free</code>.</li>
+        <li>The GLFW viewer ignores the scene file's camera, and it wasn't rebuilt on the machine used for the fixes.</li>
+        <li>No tone mapping beyond gamma 2.2 and clamping. The shipped scenes were tuned with the π-too-bright light and now render darker.</li>
+      </ul>
+
+      <h2>How I built this</h2>
+      {/* TODO-USER: choose one wording (or write your own), edit it until every sentence is true, put it in the paragraph below, and delete this comment and the bracketed note.
+      Facts to stay consistent with: the 3 original commits have no AI co-author lines. The fix commits on portfolio-fixes (Nov 2026) say "Prepared with Claude Code for review" in their messages. The browser build (web_entry.cpp, workers) was also written with Claude. The Ray Tracing in One Weekend credit is stated at the top of the page.
+
+      Option A:
+      "I wrote the original tracer while working through the book series, then added the extensions listed at the top. The fixes, the BVH, OpenMP and the WebAssembly build were prepared with Claude Code from a review of my repo; I reviewed each commit, and the renders and tests on this page are how I checked them."
+
+      Option B: write your own. */}
+      <p class="todo">[choose disclosure wording] TODO-USER</p>
+      <p><a href={url('#work')}>Back to all projects</a></p>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .rt-media { max-width: 40rem; }
+  .rt-media :global(.rt-media__main) { width: 100%; height: auto; }
+  .rt-media figcaption { margin-top: 0.5rem; }
+  .formula { font-family: var(--font-display); font-size: var(--step-1); padding: 0.75rem 1rem; background: var(--paper-2); border-left: 3px solid var(--emit-ink); }
+  .shots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 60rem) { .shots { grid-template-columns: 1fr; } }
+</style>

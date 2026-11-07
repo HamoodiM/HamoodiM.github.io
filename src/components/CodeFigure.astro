@@ -1,0 +1,8 @@
+---
+interface Props { href: string; file: string; lines: string; code: string; note?: string }
+const { href, file, lines, code, note } = Astro.props;
+---
+<figure class="code">
+  <figcaption><a href={href}><code>{file}</code></a>, lines {lines}{note && <span> {note}</span>}<slot name="todo" /></figcaption>
+  <pre><code>{code.replace(/^\n/, '').replace(/\s+$/, '')}</code></pre>
+</figure>

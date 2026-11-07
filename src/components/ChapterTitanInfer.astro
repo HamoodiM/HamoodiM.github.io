@@ -1,0 +1,59 @@
+---
+import MatmulViz from './MatmulViz.astro';
+import { url } from '../data/site';
+---
+<section class="ch-ti term" id="titaninfer" aria-labelledby="ti-h">
+  <div class="wrap">
+    <header class="ch-ti__head">
+      <p class="ch-ti__prompt" aria-hidden="true">$ ctest --test-dir build -C Release</p>
+      <h2 id="ti-h" data-reveal>TitanInfer</h2>
+      <p class="ch-ti__intro">A neural-network inference library in C++20, written without BLAS, Eigen or LAPACK. It loads a model from its own binary format and runs it on the CPU. 346 GoogleTest cases run in GitHub Actions on Ubuntu and Windows.</p>
+    </header>
+
+    <div class="ch-ti__grid">
+      <div class="ch-ti__text">
+        <h3>Why the matmul is blocked</h3>
+        <p>A plain triple loop walks a whole column of B for every element of C. By the time the next row of C needs that column again, the cache has thrown it out, so the same data comes from memory over and over.</p>
+        <p>The AVX2 kernel cuts the loops into blocks (MC × KC of A, KC × NC of B) sized so one block of each stays in cache while it is reused, then runs an 8-wide fused multiply-add along K. Press Play, then switch to Unblocked and compare the lines loaded.</p>
+        <p>The weak spot shows up here too: B is row-major, so the 8 values of one B column sit N floats apart and the kernel gathers them with <code>_mm256_set_ps</code> from 8 scalar loads. Packing each B block into a contiguous, transposed buffer is the next step.</p>
+        <p class="ch-ti__honest">The kernel is tested and benchmarked on its own, but the layers don't call it yet: Dense, the fused layers and Conv2D still use the scalar matmul. I haven't recorded benchmark numbers, so this page doesn't quote a speed-up.</p>
+        <!-- TODO-USER: run matrix_benchmark (Release, note the CPU) and add measured naive vs AVX2 times here. Don't quote the "3-5x" from the old README until you've measured it. -->
+      </div>
+      <MatmulViz />
+    </div>
+
+    <figure class="code ch-ti__code">
+      <figcaption><a href="https://github.com/HamoodiM/TitanInfer/blob/3c06f119587e754d79a5edb7b47c6b92786fab3e/src/ops/matrix_ops_simd.cpp#L108-L117"><code>src/ops/matrix_ops_simd.cpp</code></a>, the block loops (lines 108–117, condensed)</figcaption>
+      <pre><code>for (size_t i = 0; i &lt; M; i += MC) &#123;          // MC = 64 rows of A and C
+    for (size_t k = 0; k &lt; K; k += KC) &#123;      // KC = 256 along the shared dimension
+        for (size_t j = 0; j &lt; N; j += NC) &#123;  // NC = 64 columns of B and C
+            // ib x jb micro-kernel, 8-wide FMA along k
+        &#125;
+    &#125;
+&#125;</code></pre>
+    </figure>
+
+    <p class="ch-ti__links">
+      <a href={url('projects/titaninfer/')}>Read the full write-up: tensor, kernel, model format, engine</a>
+      <a href="https://github.com/HamoodiM/TitanInfer">Source on GitHub</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .ch-ti { padding-block: clamp(3rem, 7vw, 6rem); }
+  .ch-ti__head { display: grid; gap: 1rem; margin-bottom: clamp(2rem, 5vw, 3rem); max-width: 48rem; }
+  .ch-ti__prompt { font-family: var(--font-mono); font-size: 0.82rem; color: var(--t-ink-2); }
+  .ch-ti__head h2 { font-family: var(--font-mono); font-weight: 500; letter-spacing: -0.04em; }
+  .ch-ti__intro { font-size: var(--step-1); line-height: 1.45; }
+  .ch-ti__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: start; }
+  .ch-ti__text { display: grid; gap: 0.9rem; max-width: 34rem; }
+  .ch-ti__text p + p { margin-top: 0; }
+  .ch-ti__text h3 { font-family: var(--font-mono); font-size: var(--step-1); font-weight: 500; }
+  .ch-ti__honest { border-left: 2px solid var(--t-b); padding-left: 0.8rem; color: var(--t-ink-2); }
+  .ch-ti__code { max-width: 48rem; margin-top: clamp(2rem, 5vw, 3rem); }
+  .ch-ti__code figcaption { color: var(--t-ink-2); }
+  .ch-ti__code pre { background: var(--t-panel); border-color: var(--t-rule); color: var(--t-ink); }
+  .ch-ti__links { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; margin-top: 2rem; font-weight: 600; }
+  @media (max-width: 60rem) { .ch-ti__grid { grid-template-columns: 1fr; } }
+</style>

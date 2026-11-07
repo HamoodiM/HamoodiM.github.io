@@ -1,0 +1,134 @@
+---
+// Before/after comparison of real bug fixes in the Raytracer (renders from docs/FIXES.md on the
+// portfolio-fixes branch). Without JS the two images sit side by side; with JS they overlap and a
+// range input drives the split.
+import { Image } from 'astro:assets';
+import rngB from '../assets/raytracer/rng_before.png';
+import rngA from '../assets/raytracer/rng_after.png';
+import nB from '../assets/raytracer/normals_before.png';
+import nA from '../assets/raytracer/normals_after.png';
+import dB from '../assets/raytracer/direct_before.png';
+import dA from '../assets/raytracer/direct_after.png';
+import { rtCommit } from '../data/site';
+
+const pairs = [
+  {
+    id: 'rng',
+    tab: 'Random number range',
+    before: rngB, after: rngA,
+    beforeRef: 'b79885c', afterRef: '351cc24',
+    afterHash: '351cc245bb9c3af6b87bf8f677f326516da21615',
+    altB: 'Before the fix: the fuzzy metal sphere looks almost like a sharp mirror and the out-of-focus spheres are only partly blurred.',
+    altA: 'After the fix: the fuzzy metal reflection is properly blurred and the near yellow sphere has a full, centred depth-of-field blur.',
+    text: '<code>random_float</code> kept its distribution in a function-local <code>static</code>, so it kept the range of its first call, [0, 1). Every later request for [-1, 1) got [0, 1) too, and random points in the unit sphere and disk came from one octant only. Compare the fuzzy metal sphere (almost a sharp mirror before) and the defocus blur on the near yellow sphere.',
+  },
+  {
+    id: 'tbn',
+    tab: 'Transposed TBN matrix',
+    before: nB, after: nA,
+    beforeRef: 'b79885c', afterRef: '3c6446a',
+    afterHash: '3c6446ad919773c251b6b770217e8503f968a379',
+    altB: 'Shading-normal debug view before the fix: the colours on the normal-mapped spheres do not match their orientation.',
+    altA: 'Shading-normal debug view after the fix: sphere tops are green, right sides red and camera-facing sides blue, with brick bevels on top.',
+    text: 'Debug view: colour is 0.5 × (n + 1). <code>glm::mat3</code> takes columns, so typing T, B and N in row by row built the transpose, the world-to-tangent matrix. After the fix every sphere is green on top (+y), red on the right (+x) and blue toward the camera (+z).',
+  },
+  {
+    id: 'direct',
+    tab: 'Direct light, 1/π',
+    before: dB, after: dA,
+    beforeRef: '8d651dd', afterRef: '704fd0c',
+    afterHash: '704fd0ca8a642dac761d417c7f43f36d5b3f4a62',
+    altB: 'Material test scene before the fix: everything is brighter and the glass and chrome spheres look partly matte.',
+    altA: 'The same scene after the fix: diffuse surfaces are darker, and glass and chrome only show what they reflect and refract.',
+    text: 'The light-sampling term computed <code>radiance × cos / pdf</code> with no 1/π, so direct light was π times too bright, and it was added to mirrors and glass, which made them look partly matte. Now it is <code>(albedo / π) × L × cos / pdf</code>, for diffuse surfaces only.',
+  },
+];
+---
+<div class="ba" data-island="beforeafter">
+  <div class="ba__tabs" role="tablist" aria-label="Bug fixes" hidden data-ba-tablist>
+    {pairs.map((p, i) => (
+      <button class="ba__tab" role="tab" type="button" id={`ba-tab-${p.id}`} aria-controls={`ba-${p.id}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1}>{p.tab}</button>
+    ))}
+  </div>
+  {pairs.map((p, i) => (
+    <section class="ba__pair" id={`ba-${p.id}`} role="tabpanel" aria-labelledby={`ba-tab-${p.id}`} data-ba-pair data-active={i === 0 ? '' : undefined} aria-label={p.tab}>
+      <h3 class="ba__title visually-hidden">{p.tab}</h3>
+      <div class="ba__stage" style={`--ar: ${p.before.width} / ${p.before.height}`} data-ba-stage>
+        <figure class="ba__img ba__img--before">
+          <Image src={p.before} alt={p.altB} widths={[480, 960]} sizes="(min-width: 60rem) 56rem, 100vw" loading="lazy" decoding="async" />
+          <figcaption class="ba__label ba__label--before">Before <code>{p.beforeRef}</code></figcaption>
+        </figure>
+        <figure class="ba__img ba__img--after" data-ba-after>
+          <Image src={p.after} alt={p.altA} widths={[480, 960]} sizes="(min-width: 60rem) 56rem, 100vw" loading="lazy" decoding="async" />
+          <figcaption class="ba__label ba__label--after">After <a href={rtCommit(p.afterHash)}><code>{p.afterRef}</code></a></figcaption>
+        </figure>
+        <span class="ba__handle" aria-hidden="true" data-ba-handle></span>
+        <input class="ba__range" type="range" min="0" max="100" value="50" step="1" aria-label={`Split between before and after: ${p.tab}`} data-ba-range hidden />
+      </div>
+      <p class="ba__text small" set:html={p.text} />
+    </section>
+  ))}
+</div>
+
+<style>
+  .ba { display: grid; gap: 1rem; }
+  .ba__tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .ba__tab {
+    font: inherit; font-size: var(--step--1);
+    background: none; color: var(--ink-2);
+    border: 1px solid var(--rule); border-radius: 2px;
+    padding: 0.4rem 0.75rem; cursor: pointer;
+  }
+  .ba__tab[aria-selected='true'] { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+  .ba__pair { display: grid; gap: 0.75rem; }
+  .ba__pair + .ba__pair { margin-top: 2rem; }
+  .ba__text { color: var(--ink-2); max-width: 44rem; }
+
+  /* No JS: two images side by side (stacked on phones). */
+  .ba__stage { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .ba__img { position: relative; margin: 0; }
+  .ba__img :global(img) { width: 100%; height: auto; }
+  .ba__label {
+    position: absolute; top: 0.5rem; padding: 0.15rem 0.5rem;
+    font-size: 0.8rem; color: #fff; background: rgba(20, 22, 27, 0.82);
+    border-left: 3px solid;
+    z-index: 2;
+  }
+  .ba__label a { color: inherit; }
+  .ba__label code { background: none; padding: 0; color: inherit; }
+  .ba__label--before { left: 0.5rem; border-color: #e46a5e; }
+  .ba__label--after { right: 0.5rem; border-color: #7dbf8a; }
+  .ba__handle { display: none; }
+  @media (max-width: 40rem) { .ba__stage { grid-template-columns: 1fr; } }
+
+  /* With JS: one stage, the after image clipped by --split. */
+  :global(html.js) .ba__pair:not([data-active]) { display: none; }
+  :global(html.js) .ba__pair + .ba__pair { margin-top: 0; }
+  :global(html.js) .ba__stage {
+    display: block; position: relative; aspect-ratio: var(--ar, 16 / 9);
+    overflow: hidden; background: var(--paper-2); --split: 50%;
+    max-width: 60rem; touch-action: pan-y;
+  }
+  :global(html.js) .ba__img { position: absolute; inset: 0; pointer-events: none; }
+  :global(html.js) .ba__img--after { z-index: 2; }
+  :global(html.js) .ba__label { pointer-events: auto; }
+  :global(html.js) .ba__img :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  :global(html.js) .ba__img--after { clip-path: inset(0 0 0 var(--split)); }
+  :global(html.js) .ba__handle {
+    display: block; position: absolute; top: 0; bottom: 0; left: var(--split);
+    width: 2px; margin-left: -1px; background: #fff; pointer-events: none; z-index: 3;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  }
+  :global(html.js) .ba__handle::after {
+    content: ''; position: absolute; top: 50%; left: 50%; width: 1.6rem; height: 1.6rem;
+    transform: translate(-50%, -50%); background: #fff; border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+    background-image: linear-gradient(90deg, #e46a5e 0 50%, #7dbf8a 50% 100%);
+    background-size: 0.55rem 0.55rem; background-position: center; background-repeat: no-repeat;
+  }
+  :global(html.js) .ba__range {
+    position: absolute; inset: 0; width: 100%; height: 100%; margin: 0;
+    opacity: 0; cursor: ew-resize; display: block; z-index: 1;
+  }
+  :global(html.js) .ba__range:focus-visible + * , :global(html.js) .ba__stage:focus-within { outline: 2px solid var(--focus); outline-offset: 3px; }
+</style>

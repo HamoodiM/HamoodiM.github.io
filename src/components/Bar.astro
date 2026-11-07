@@ -1,0 +1,80 @@
+---
+import { url, RESUME, GITHUB, EMAIL, NAME } from '../data/site';
+interface Props { page: string }
+const { page } = Astro.props;
+---
+<header class="bar">
+  <div class="bar__inner">
+    <a class="bar__name" href={url()} data-page={page}>{NAME}</a>
+    <nav class="bar__nav" aria-label="Résumé and contact">
+      <ul>
+        <li><a href={RESUME}>Résumé<span class="visually-hidden"> (PDF)</span></a></li>
+        <li><a href={GITHUB}>GitHub</a></li>
+        <li><a href={`mailto:${EMAIL}`}>Email</a></li>
+      </ul>
+    </nav>
+    <button class="motion" type="button" aria-pressed="true" data-motion-toggle title="Turn animation on or off">
+      <span class="motion__dot" aria-hidden="true"></span>
+      <span class="motion__label">Motion</span>
+    </button>
+  </div>
+  <span class="progress" aria-hidden="true"></span>
+</header>
+
+<style>
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    height: var(--bar-h);
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+  }
+  .bar__inner {
+    width: min(100% - 2 * var(--gutter), var(--wide));
+    margin-inline: auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: clamp(0.75rem, 3vw, 2rem);
+  }
+  .bar__name {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 500;
+    text-decoration: none;
+    margin-right: auto;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+  }
+  .bar__nav ul { display: flex; gap: clamp(0.9rem, 3vw, 1.75rem); list-style: none; padding: 0; margin: 0; }
+  .bar__nav a { text-decoration: none; font-size: 0.95rem; padding-block: 0.6rem; }
+  .bar__nav a:hover { text-decoration: underline; }
+  .motion {
+    font: inherit;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--ink-2);
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 0.3rem 0.55rem;
+    cursor: pointer;
+  }
+  .motion:hover { color: var(--ink); border-color: var(--ink-2); }
+  .motion__dot {
+    width: 0.6rem; height: 0.6rem;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    transition: background-color 200ms var(--ease);
+  }
+  .motion[aria-pressed='true'] .motion__dot { background: var(--emit-ink); border-color: var(--emit-ink); }
+  /* At phone width the bar shows the Cornell-box monogram; the H1 carries the name. */
+  @media (max-width: 30rem) {
+    .bar__name { font-size: 0; overflow: hidden; width: 1.6rem; height: 1.6rem; flex: none; background: var(--ink); mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="3" y="3" width="6" height="26"/><rect x="23" y="3" width="6" height="26"/><rect x="9" y="3" width="14" height="3"/><circle cx="16" cy="21" r="5"/></svg>') center/contain no-repeat; }
+    .motion__label { font-size: 0.8rem; }
+    .bar__nav ul { gap: 0.85rem; }
+  }
+</style>

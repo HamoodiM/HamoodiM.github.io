@@ -1,0 +1,88 @@
+---
+import { Image } from 'astro:assets';
+import { projects, url } from '../data/site';
+import lsThumb from '../assets/linguaspy/03_paris_grader_hint.png';
+import rtThumb from '../assets/raytracer/hero_cornell.png';
+import tiThumb from '../assets/raytracer/hero_knot.png';
+
+// TitanInfer has no image of its own yet, so its thumbnail is drawn (a blocked matrix), not borrowed.
+const thumbs: Record<string, ImageMetadata | null> = { linguaspy: lsThumb, raytracer: rtThumb, titaninfer: null };
+const alts: Record<string, string> = {
+  linguaspy: 'LinguaSpy: the spy at a Paris café counter, building a French reply from word tiles while the handler gives a hint.',
+  raytracer: 'Cornell box rendered by the path tracer: red and green walls, a glass sphere and a gold sphere under a visible area light.',
+};
+---
+<section class="work" id="work" aria-labelledby="work-h">
+  <div class="wrap">
+    <h2 id="work-h" class="work__h" data-reveal>Work</h2>
+    <ul class="work__list">
+      {projects.map((p) => (
+        <li class={`row row--${p.slug}`}>
+          <a class="row__media" href={url(`projects/${p.slug}/`)} tabindex="-1" aria-hidden="true" style={`view-transition-name: vt-${p.slug}-media`}>
+            {thumbs[p.slug] ? (
+              <Image src={thumbs[p.slug]!} alt="" widths={[320, 560]} sizes="(min-width: 50rem) 17rem, 40vw" loading="lazy" decoding="async" />
+            ) : (
+              <svg viewBox="0 0 160 90" role="presentation" class="row__matrix">
+                {Array.from({ length: 8 }, (_, r) => Array.from({ length: 14 }, (_, c) => (
+                  <rect x={9 + c * 10} y={6 + r * 10} width="8" height="8" class={r < 4 && c >= 4 && c < 8 ? 'on' : r < 4 ? 'row' : ''} />
+                )))}
+              </svg>
+            )}
+          </a>
+          <div class="row__body">
+            <h3 class="row__name"><a href={url(`projects/${p.slug}/`)} style={`view-transition-name: vt-${p.slug}-title`}>{p.name}</a></h3>
+            <p class="row__pitch">{p.pitch}</p>
+            <p class="row__pitch row__pitch--short">{p.short}</p>
+            <p class="row__meta">{p.meta}</p>
+            <ul class="row__links">
+              <li><a href={url(`projects/${p.slug}/`)}>Write-up<span class="visually-hidden">: {p.name}</span></a></li>
+              <li><a href={`#${p.slug}`}>Demo on this page<span class="visually-hidden">: {p.name}</span></a></li>
+              {p.source ? <li><a href={p.source}>Source<span class="visually-hidden">: {p.name}</span></a></li> : <li class="muted">{p.sourceNote}</li>}
+            </ul>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .work { padding-block: clamp(2rem, 5vw, 4rem) clamp(3rem, 7vw, 6rem); }
+  .work__h { margin-bottom: clamp(1rem, 3vw, 2rem); }
+  .work__list { list-style: none; padding: 0; border-top: 1px solid var(--ink); }
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
+    gap: clamp(1rem, 3vw, 2.5rem);
+    padding-block: clamp(1.25rem, 3vw, 2rem);
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .row__media { display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--paper-2); }
+  .row__media :global(img) { width: 100%; height: 100%; object-fit: cover; transition: transform 600ms var(--ease); }
+  .row:hover .row__media :global(img) { transform: scale(1.035); }
+  .row--linguaspy .row__media :global(img) { object-position: 30% 85%; }
+  .row__matrix { width: 100%; height: 100%; background: #0f1412; }
+  .row__matrix rect { fill: #1f2a25; }
+  .row__matrix rect.row { fill: #2f4a5e; }
+  .row__matrix rect.on { fill: #c9963a; }
+  .row__body { display: grid; gap: 0.5rem; max-width: 42rem; }
+  .row__name { font-size: var(--step-3); font-weight: 400; }
+  .row__name a { text-decoration: none; display: inline-block; }
+  .row__name a:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+  .row__meta { color: var(--ink-2); font-size: var(--step--1); }
+  .row__pitch--short { display: none; }
+  .row__links { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem 1.5rem; font-size: var(--step--1); }
+  @media (max-width: 40rem) {
+    .work { padding-block: 1rem 3rem; }
+    .work__h { margin-bottom: 0.75rem; font-size: var(--step-3); }
+    .row { grid-template-columns: minmax(0, 1fr) 4.5rem; gap: 0.75rem; padding-block: 1rem; }
+    .row__media { grid-column: 2; grid-row: 1; aspect-ratio: 1; }
+    .row__body { grid-column: 1; grid-row: 1; gap: 0.35rem; }
+    .row__name { font-size: var(--step-2); }
+    .row__pitch { display: none; }
+    .row__pitch--short { display: block; font-size: 0.95rem; line-height: 1.42; }
+    .row__meta { font-size: 0.8rem; }
+    .row__links { gap: 0.25rem 1.1rem; }
+  }
+</style>

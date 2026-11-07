@@ -1,0 +1,92 @@
+---
+import { bvhRows, bvhMachine, e2e } from '../data/bvh';
+interface Props { openTable?: boolean }
+const { openTable = false } = Astro.props;
+const LO = -4, HI = 1; // log10 Mrays/s domain: 0.0001 .. 10
+const pct = (v: number) => (((Math.log10(v) - LO) / (HI - LO)) * 100).toFixed(2);
+const fmt = (n: number) => n.toLocaleString('en-US');
+const ticks = [0.0001, 0.001, 0.01, 0.1, 1, 10];
+---
+<figure class="bvh" data-island="bvh" aria-labelledby="bvh-cap">
+  <div class="bvh__legend" aria-hidden="true">
+    <span class="bvh__key bvh__key--brute">Brute force: every ray tests every triangle</span>
+    <span class="bvh__key bvh__key--bvh">Binned-SAH BVH</span>
+  </div>
+  <ol class="bvh__rows" aria-hidden="true">
+    {bvhRows.map((r) => (
+      <li class="bvh__row">
+        <span class="bvh__tris">{fmt(r.tris)} triangles</span>
+        <span class="bvh__track">
+          <span class="bvh__bar bvh__bar--brute" style={`--w:${pct(r.brute)}%`} data-bar></span>
+          <span class="bvh__bar bvh__bar--bvh" style={`--w:${pct(r.sah)}%`} data-bar></span>
+        </span>
+        <span class="bvh__x"><span data-count={r.speedup}>{fmt(r.speedup)}</span>× faster</span>
+      </li>
+    ))}
+  </ol>
+  <div class="bvh__axis" aria-hidden="true">
+    {ticks.map((t) => <span style={`left:${pct(t)}%`}>{t >= 1 ? t : t.toString()}</span>)}
+    <em>million rays per second, log scale</em>
+  </div>
+  <figcaption id="bvh-cap" class="bvh__cap small">
+    Rays cast per second by <code>bvh_bench</code> against a bumpy sphere tessellated into more and more triangles. Measured on an {bvhMachine}. Native builds are faster; the ratios are the point. Brute force ran on a subset of the same rays for the big meshes, and its hit distances matched the BVH for every ray.
+  </figcaption>
+  <details class="bvh__table" open={openTable}>
+    <summary>All measured values</summary>
+    <div class="bvh__scroll">
+      <table>
+        <thead>
+          <tr><th scope="col">Triangles</th><th scope="col">SAH build (ms)</th><th scope="col">BVH nodes</th><th scope="col">BVH, SAH (Mrays/s)</th><th scope="col">BVH, midpoint (Mrays/s)</th><th scope="col">Brute force (Mrays/s)</th><th scope="col">Speed-up, SAH vs brute force</th></tr>
+        </thead>
+        <tbody>
+          {bvhRows.map((r) => (
+            <tr><td>{fmt(r.tris)}</td><td>{r.buildMs}</td><td>{fmt(r.nodes)}</td><td>{r.sah}</td><td>{r.mid}</td><td>{r.brute}</td><td>{fmt(r.speedup)}×</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </details>
+  <p class="bvh__e2e">
+    A whole render of <code>{e2e.scene}</code> ({fmt(e2e.objects)} objects, {e2e.res}, {e2e.spp} spp) took <strong>{e2e.bvhS} s</strong> with the BVH and <strong>{e2e.bruteS} s</strong> without it. The two output images were byte-identical.
+  </p>
+</figure>
+
+<style>
+  .bvh { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+  .bvh > * { min-width: 0; }
+  .bvh__legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-size: var(--step--1); color: var(--ink-2); }
+  .bvh__key::before { content: ''; display: inline-block; width: 0.9rem; height: 0.55rem; margin-right: 0.45rem; vertical-align: 0.05em; }
+  .bvh__key--brute::before { background: var(--red); }
+  .bvh__key--bvh::before { background: var(--green); }
+  .bvh__rows { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+  .bvh__row { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr) 8.5rem; gap: 1rem; align-items: center; }
+  .bvh__tris { font-variant-numeric: tabular-nums; font-size: var(--step--1); text-align: right; }
+  .bvh__track {
+    position: relative; height: 1.5rem;
+    background-image: linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 20% 100%;
+  }
+  .bvh__bar { position: absolute; left: 0; height: 0.62rem; width: var(--w); transform-origin: 0 50%; }
+  .bvh__bar--brute { top: 0; background: var(--red); }
+  .bvh__bar--bvh { bottom: 0; background: var(--green); }
+  .bvh__x { font-family: var(--font-display); font-size: var(--step-1); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+  .bvh__axis { position: relative; height: 2.6rem; margin-left: 10.5rem; margin-right: 9.5rem; font-size: 0.75rem; color: var(--ink-2); }
+  .bvh__axis span { position: absolute; top: 0; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+  .bvh__axis em { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-style: normal; }
+  .bvh__cap { color: var(--ink-2); max-width: 46rem; }
+  .bvh__table summary { cursor: pointer; font-size: var(--step--1); }
+  .bvh__table { min-width: 0; max-width: 100%; }
+  .bvh__scroll { overflow-x: auto; margin-top: 0.75rem; width: 100%; max-width: calc(100vw - 2 * var(--gutter)); }
+  table { border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; min-width: 40rem; }
+  th, td { padding: 0.35rem 0.7rem; text-align: right; border-bottom: 1px solid var(--rule); }
+  th { font-weight: 600; vertical-align: bottom; }
+  .bvh__e2e { max-width: 46rem; }
+  @media (max-width: 40rem) {
+    .bvh__row { grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 0.75rem; }
+    .bvh__tris { text-align: left; grid-column: 1; grid-row: 1; }
+    .bvh__x { grid-column: 2; grid-row: 1; font-size: var(--step-0); }
+    .bvh__track { grid-column: 1 / -1; }
+    .bvh__axis { margin-left: 0; margin-right: 0; }
+    .bvh__axis span:nth-child(even) { display: none; }
+  }
+</style>
