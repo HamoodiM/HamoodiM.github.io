@@ -2,7 +2,7 @@
    Scoped under .demo so it can't leak. Colours come from the dossier tokens set on .ch-ls. */
 .demo .ls-demo {
   --ok: #2b6436;
-  --wrong: var(--d-stamp, #b8322a);
+  --wrong: var(--d-stamp, #962520);
   --accent: #8a5a0e;
   display: grid;
   gap: 0.9rem;

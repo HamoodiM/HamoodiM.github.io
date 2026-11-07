@@ -125,7 +125,7 @@ const cities = [
     --d-ink: #1f1c17;
     --d-ink-2: #5a5040;
     --d-rule: #c4b28d;
-    --d-stamp: #b8322a;
+    --d-stamp: #962520;
     --dossier-type: 'Courier New', Courier, 'Nimbus Mono PS', monospace;
     padding-block: clamp(3rem, 7vw, 6rem);
   }
@@ -152,6 +152,7 @@ const cities = [
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08), 0 18px 40px -28px rgba(40, 28, 10, 0.45);
   }
   .folder a { color: var(--d-ink); }
+  .folder .muted { color: var(--d-ink-2); }
   .folder :global(:not(pre) > code) { background: rgba(80, 60, 20, 0.1); }
   .folder :focus-visible { outline-color: var(--d-stamp); }
   .folder__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; }
@@ -170,7 +171,7 @@ const cities = [
     padding: 0.25rem 0.6rem;
     transform: rotate(-5deg);
     mix-blend-mode: multiply;
-    opacity: 0.88;
+    opacity: 1;
   }
   .stamp--b { transform: rotate(3deg); }
 

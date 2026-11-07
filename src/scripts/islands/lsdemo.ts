@@ -22,7 +22,7 @@ export default async function initDemo(root: HTMLElement) {
       if (meter) gsap.fromTo(meter, { x: -6 }, { x: 0, duration: 0.5, ease: 'elastic.out(1, 0.35)', clearProps: 'transform' });
     } else if (e.type === 'box-move') {
       const box = mount.querySelector(`.ls-demo__box[data-box="${e.to}"]`);
-      if (box) gsap.fromTo(box, { backgroundColor: '#b8322a', color: '#fff8ec' }, { backgroundColor: 'rgba(0,0,0,0)', color: 'inherit', duration: 0.9, clearProps: 'backgroundColor,color' });
+      if (box) gsap.fromTo(box, { backgroundColor: '#962520', color: '#fff8ec' }, { backgroundColor: 'rgba(0,0,0,0)', color: 'inherit', duration: 0.9, clearProps: 'backgroundColor,color' });
     }
   };
 
