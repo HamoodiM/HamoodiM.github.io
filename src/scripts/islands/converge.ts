@@ -21,7 +21,7 @@ export default function initConverge(root: HTMLElement) {
     const spp = frames[i].dataset.spp ?? '';
     if (readout.firstChild) readout.firstChild.nodeValue = spp;
     range.value = String(i);
-    range.setAttribute('aria-valuetext', `${spp} samples per pixel`);
+    range.setAttribute('aria-valuetext', `${spp} ${spp === '1' ? 'sample' : 'samples'} per pixel`);
   };
   range.addEventListener('input', () => show(Number(range.value)));
 

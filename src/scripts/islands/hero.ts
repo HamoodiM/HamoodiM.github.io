@@ -50,7 +50,7 @@ export default function initHero(fig: HTMLElement) {
       btnStart!.hidden = true;
       [btnPause, btnBvh, btnReset, readout, hint].forEach((el) => (el!.hidden = false));
       if (stateK) stateK.textContent = 'Live render';
-      if (stateV) stateV.textContent = `The same scene, traced on your CPU at 480×270 by ${workers} Web Worker${workers > 1 ? 's' : ''} running my C++ compiled to WebAssembly.`;
+      if (stateV) stateV.textContent = `The same scene, traced on your CPU at 480×270 by ${workers} Web Worker${workers > 1 ? 's' : ''} running the path tracer's C++ compiled to WebAssembly.`;
       resume();
     } catch (err) {
       console.error('[hero] live tracer failed', err);

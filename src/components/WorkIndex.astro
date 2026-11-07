@@ -3,7 +3,6 @@ import { Image } from 'astro:assets';
 import { projects, url } from '../data/site';
 import lsThumb from '../assets/linguaspy/03_paris_grader_hint.png';
 import rtThumb from '../assets/raytracer/hero_cornell.png';
-import tiThumb from '../assets/raytracer/hero_knot.png';
 
 // TitanInfer has no image of its own yet, so its thumbnail is drawn (a blocked matrix), not borrowed.
 const thumbs: Record<string, ImageMetadata | null> = { linguaspy: lsThumb, raytracer: rtThumb, titaninfer: null };

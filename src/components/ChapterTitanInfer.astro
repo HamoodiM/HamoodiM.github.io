@@ -23,7 +23,7 @@ import { url } from '../data/site';
     </div>
 
     <figure class="code ch-ti__code">
-      <figcaption><a href="https://github.com/HamoodiM/TitanInfer/blob/3c06f119587e754d79a5edb7b47c6b92786fab3e/src/ops/matrix_ops_simd.cpp#L108-L117"><code>src/ops/matrix_ops_simd.cpp</code></a>, the block loops (lines 108–117, condensed)</figcaption>
+      <figcaption><a href="https://github.com/HamoodiM/TitanInfer/blob/3c06f119587e754d79a5edb7b47c6b92786fab3e/src/ops/matrix_ops_simd.cpp#L107-L117"><code>src/ops/matrix_ops_simd.cpp</code></a>, the block loops (lines 107–117, condensed)</figcaption>
       <pre><code>for (size_t i = 0; i &lt; M; i += MC) &#123;          // MC = 64 rows of A and C
     for (size_t k = 0; k &lt; K; k += KC) &#123;      // KC = 256 along the shared dimension
         for (size_t j = 0; j &lt; N; j += NC) &#123;  // NC = 64 columns of B and C

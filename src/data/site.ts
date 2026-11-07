@@ -40,7 +40,7 @@ export const projects: Project[] = [
     name: 'Raytracer',
     pitch:
       'A CPU path tracer in C++17, started from Ray Tracing in One Weekend. I fixed five sampling and shading bugs and added a binned-SAH BVH, OpenMP rendering and Russian roulette.',
-    short: 'A C++17 path tracer. I fixed five sampling bugs and added a SAH BVH, OpenMP and Russian roulette.',
+    short: 'A C++17 path tracer. I fixed five rendering bugs and added a SAH BVH, OpenMP and Russian roulette.',
     meta: 'Solo. C++17, CMake. Oct 2025, fixes and BVH Nov 2026.',
     // TODO-USER: the fixes live on the local branch portfolio-fixes. Merge and push it before publishing, or the page describes code that isn't on GitHub yet.
     source: 'https://github.com/HamoodiM/Raytracer',
