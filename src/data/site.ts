@@ -4,7 +4,7 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
 export const url = (path = ''): string => base + path.replace(/^\//, '');
 
 export const NAME = 'Mohammad Mohammad';
-export const EMAIL = 'mohammadmohammad3@cmail.carleton.ca';
+export const EMAIL = 'mohpresentations@gmail.com';
 export const GITHUB = 'https://github.com/HamoodiM';
 export const LINKEDIN = 'https://www.linkedin.com/in/mohammadm152';
 export const RESUME = url('resume/Mohammad%20Mohammad%20-%20Gameplay%20Programmer.pdf');
