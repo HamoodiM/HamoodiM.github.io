@@ -184,7 +184,7 @@ const shots = [
         <li>A feedback ladder: the first wrong attempt gets a hint and costs 40% of the cover penalty, the second shows the model answer and costs the rest.</li>
         <li>A cover meter (<code>UActorComponent</code> with delegates). When it reaches zero the mission stops and you practise the phrases you got wrong.</li>
         <li>An adaptive handler: an S or A grade on a mission gives you less translation help next time, a C gives you more.</li>
-        <li>A versioned save format (v3) with step-by-step migrations and async saving.</li>
+        <li>A versioned save format (now v4) with step-by-step migrations and async saving.</li>
         <li>Occlusion fade: every tick a sphere sweep runs from the camera to the player, and buildings in the way fade out: the component writes a fade value into each mesh's Custom Primitive Data, which the toon material turns into a dither. Ground and low props are skipped by comparing their bounds to the player's feet.</li>
         <li>Pedestrians that wander to random reachable navmesh points around a home location, and NPCs that turn to face you while you talk.</li>
         <li>A Slate editor tab for authoring and validating conversations.</li>
