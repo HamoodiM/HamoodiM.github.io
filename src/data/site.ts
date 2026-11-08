@@ -31,7 +31,7 @@ export const projects: Project[] = [
     pitch:
       'A top-down spy game about learning a language. You keep your cover in Paris, Madrid, Tokyo or Rome by answering locals in French, Spanish, Japanese or Italian.',
     short: 'A UE5 C++ spy game: keep your cover by answering locals in French, Spanish, Japanese or Italian.',
-    meta: 'Solo. Unreal Engine 5.8, C++. Sept 29 to Oct 4, 2026; visual polish Nov 2026.',
+    meta: 'Solo. Unreal Engine 5.8, C++. Sept to Nov 2026.',
     source: 'https://github.com/HamoodiM/LinguaSpy',
   },
   {

@@ -1,7 +1,6 @@
 ---
 import { Image } from 'astro:assets';
 import '../styles/ls-demo.css';
-import LoopVideo from './LoopVideo.astro';
 import paris from '../assets/linguaspy/03_paris_grader_hint.png';
 import madrid from '../assets/linguaspy/10_madrid.png';
 import tokyo from '../assets/linguaspy/07_tokyo_romaji_tiles.png';
@@ -41,7 +40,7 @@ const cities = [
           <h2 id="ls-h" data-reveal>LinguaSpy</h2>
           <p class="stamps" aria-label="Status">
             <span class="stamp" data-stamp>Solo project</span>
-            <span class="stamp stamp--b" data-stamp>Prototype v0.5</span>
+            <span class="stamp stamp--b" data-stamp>Prototype v0.6</span>
           </p>
         </header>
 
@@ -52,19 +51,12 @@ const cities = [
           </div>
           <dl class="brief__facts">
             <dt>Engine</dt><dd>Unreal Engine 5.8</dd>
-            <dt>C++</dt><dd>About 14,000 lines in the game and editor modules, about 960 of them tests</dd>
-            <dt>Python</dt><dd>About 4,000 lines of editor tooling</dd>
-            <dt>Built</dt><dd>Sept 29 to Oct 4, 2026 (26 commits); visual polish Nov 2026 (10 more)</dd>
-            <dt>Build</dt><dd>A Windows Shipping build packages</dd>
+            <dt>Code</dt><dd>C++ game and editor modules, 23 automation tests, Python editor tooling</dd>
+            <dt>Built</dt><dd>Sept to Nov 2026</dd>
+            <dt>Build</dt><dd><a href="https://github.com/HamoodiM/LinguaSpy/releases/latest">Windows build</a> and <a href={url('projects/linguaspy/')}>80-second trailer</a></dd>
           </dl>
         </div>
 
-        <LoopVideo
-          src={linguaspyMedia.loop.src}
-          poster={linguaspyMedia.loop.poster}
-          label="Twelve-second loop: the spy builds a French reply from word tiles, gets it wrong, the handler gives a hint, and the second try passes."
-          caption="Twelve seconds from the Paris café: wrong tiles, a targeted hint from the grader, then an assisted pass. The full 80-second trailer is on the write-up page."
-        />
 
         <div class="cities" data-island="dossier">
           <h3 class="cities__h">Four cities, one set of systems</h3>

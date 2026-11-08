@@ -1,4 +1,5 @@
 ---
+import TracerLive from './TracerLive.astro';
 import ConvergeScrub from './ConvergeScrub.astro';
 import BeforeAfter from './BeforeAfter.astro';
 import BvhChart from './BvhChart.astro';
@@ -9,9 +10,13 @@ import { url, RT_REPO } from '../data/site';
     <header class="ch-rt__head">
       <h2 id="rt-h" data-reveal>Raytracer</h2>
       <div class="ch-rt__intro prose">
-        <p>The image at the top of this page comes from my CPU path tracer in C++17. It started from Peter Shirley's <cite>Ray Tracing in One Weekend</cite>, and I added triangles, light sampling, normal maps, JSON scenes and a progressive viewer. In November I went back to fix the bugs a code review turned up and to build what the old README claimed but the code didn't have: a BVH, OpenMP rendering and Russian roulette.</p>
+        <p>A CPU path tracer in C++17, extended from Peter Shirley's <cite>Ray Tracing in One Weekend</cite> with triangles and OBJ meshes, light sampling, normal maps and JSON scenes. Version 2 adds a binned-SAH BVH, OpenMP rendering, Russian roulette, fixes for five sampling and shading bugs, and a WebAssembly build that runs right here in your browser.</p>
       </div>
     </header>
+
+    <div class="ch-rt__block">
+      <TracerLive />
+    </div>
 
     <div class="ch-rt__block">
       <h3>Converging</h3>
@@ -27,7 +32,7 @@ import { url, RT_REPO } from '../data/site';
 
     <div class="ch-rt__block">
       <h3>The BVH, measured</h3>
-      <p class="prose">The old BVH was a stub whose <code>hit()</code> returned false, so every ray tested every object. The new one bins primitive centroids into 16 buckets per axis, picks the split with the lowest surface-area cost, stores the tree in one flat array and walks it near child first.</p>
+      <p class="prose">Without a BVH every ray tests every object. Mine bins primitive centroids into 16 buckets per axis, picks the split with the lowest surface-area cost, stores the tree in one flat array and walks it near child first.</p>
       <BvhChart />
     </div>
 

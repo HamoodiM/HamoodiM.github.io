@@ -144,7 +144,7 @@ for (size_t i = 1; i < model_->size(); ++i) {
           <tr><td>512 × 512</td><td>69.6 ms</td><td>69.1 ms</td><td>1.01×</td></tr>
         </tbody>
       </table>
-      <p>So the kernel barely beats the naive loop, and the gain shrinks as the matrices grow. That fits the gather: past 128 × 128 the strided loads of B dominate, and blocking can't help while every 8-wide FMA waits on 8 scalar loads. The old README's "3-5x" was never measured, and it's gone. Packing B is the fix I'd make first, then re-run this table.</p>
+      <p>So the kernel barely beats the naive loop, and the gain shrinks as the matrices grow. That fits the gather: past 128 × 128 the strided loads of B dominate, and blocking can't help while every 8-wide FMA waits on 8 scalar loads. Packing B is the fix I'd make first, then re-run this table.</p>
 
       <h2 id="format">The .titan model format</h2>
       <p>A <code>.titan</code> file starts with the magic bytes <code>TITN</code> and a format version, followed by a layer count and, for each layer, a type id, its shape parameters and its float weights. The parser refuses files from a newer format version than it knows instead of misreading them:</p>

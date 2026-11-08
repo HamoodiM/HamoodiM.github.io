@@ -185,7 +185,7 @@ bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& re
   <div class="longform">
     <div class="wrap prose">
       <p>I started from Peter Shirley's <a href="https://raytracing.github.io/"><cite>Ray Tracing in One Weekend</cite></a> series, and the camera, the <code>scatter()</code> material interface, the Lambertian, metal and dielectric materials and the sampling helpers follow it closely. I extended it with planes and triangles, explicit sampling of point and area lights, normal maps, JSON scene files and an interactive progressive viewer.</p>
-      <p>A year later a code review of the repo found bugs in the sampling and shading, and found that the README claimed a BVH, OpenMP and Russian roulette that the code didn't have. This page is about fixing that: what was wrong, why it showed up in the image, and how I checked the fix.</p>
+      <p>In November 2026 I came back for version 2: a BVH, OpenMP rendering, Russian roulette, a WebAssembly build, and a careful pass over the sampling and shading maths, which turned up five bugs. This page covers what was wrong, why it showed up in the image, and how I checked each fix.</p>
 
       <h2>What it does now</h2>
       <ul>
