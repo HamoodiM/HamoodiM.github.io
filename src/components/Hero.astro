@@ -8,8 +8,9 @@ import { RESUME, GITHUB, LINKEDIN, EMAIL, url } from '../data/site';
     <h1 id="name" class="hero__name"><span>Mohammad</span> <span>Mohammad</span></h1>
 
     <div class="hero__text">
-      <p class="hero__role">Gameplay programming in C++ and Unreal Engine&nbsp;5.</p>
-      <p>I study computer science at Carleton University in Ottawa and graduate in May 2028. I'm looking for a Summer 2027 internship in gameplay programming or software engineering.</p>
+      <p class="hero__status"><span class="hero__dot" aria-hidden="true"></span>Open to Summer 2027 internships</p>
+      <p class="hero__role">I build gameplay systems in C++ and Unreal Engine&nbsp;5, and the tools and tests that keep them honest.</p>
+      <p>Computer science at Carleton University in Ottawa, graduating May 2028. By day I build C# test automation for the Department of National Defence.</p>
       <ul class="hero__links">
         <li><a href={RESUME}>Résumé (PDF)</a></li>
         <li><a href={GITHUB}>GitHub</a></li>
@@ -27,6 +28,12 @@ import { RESUME, GITHUB, LINKEDIN, EMAIL, url } from '../data/site';
       />
       <p class="hero__more"><a href={url('projects/linguaspy/')}>Watch the 80-second trailer and read how it works</a></p>
     </div>
+
+    <ul class="hero__proof" aria-label="Highlights">
+      <li><strong>4 cities, 6 missions</strong><span>in LinguaSpy, my UE5 C++ spy game</span></li>
+      <li><strong>23 automated tests</strong><span>run headless on its gameplay and learning core</span></li>
+      <li><strong>~250&times; faster</strong><span>renders from the BVH in my path tracer</span></li>
+      </ul>
   </div>
 </section>
 
@@ -41,11 +48,17 @@ import { RESUME, GITHUB, LINKEDIN, EMAIL, url } from '../data/site';
   }
   .hero__name { grid-column: 1 / -1; }
   .hero__name span { display: inline-block; }
-  .hero__text { grid-column: 1 / span 4; display: grid; gap: 1rem; max-width: 30rem; }
+  .hero__text { grid-column: 1 / span 5; display: grid; gap: 1rem; max-width: 30rem; }
   .hero__role { font-family: var(--font-display); font-size: var(--step-2); line-height: 1.2; font-weight: 400; letter-spacing: -0.01em; }
+  .hero__status { display: inline-flex; align-items: center; gap: 0.55rem; font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.02em; color: var(--ink-2); }
+  .hero__dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 25%, transparent); flex: none; }
+  .hero__proof { grid-column: 1 / -1; list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: clamp(1rem, 2.5vw, 2rem); border-top: 1px solid var(--rule); }
+  .hero__proof li { display: grid; gap: 0.15rem; padding: 0.9rem 0 0; }
+  .hero__proof strong { font-family: var(--font-display); font-weight: 500; font-size: var(--step-1); line-height: 1.15; font-variant-numeric: lining-nums; }
+  .hero__proof span { font-size: var(--step--1); color: var(--ink-2); line-height: 1.35; }
   .hero__links { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem 1.25rem; margin-top: 0.25rem; }
   .hero__links a { overflow-wrap: anywhere; }
-  .hero__render { grid-column: 5 / -1; }
+  .hero__render { grid-column: 6 / -1; }
 
   .hero__more { margin-top: 0.6rem; font-size: var(--step--1); }
   @media (max-width: 60rem) {
@@ -58,6 +71,8 @@ import { RESUME, GITHUB, LINKEDIN, EMAIL, url } from '../data/site';
     .hero__name { font-size: clamp(2.6rem, 13vw, 4.5rem); }
     .hero__role { font-size: 1.3rem; }
     .hero__text { gap: 0.6rem; }
+    .hero__proof { grid-template-columns: minmax(0, 1fr); }
+    .hero__proof li { padding: 0.5rem 0; border-bottom: 1px solid var(--rule); }
     .hero__text p:not(.hero__role) { font-size: 0.98rem; line-height: 1.5; }
   }
 </style>
