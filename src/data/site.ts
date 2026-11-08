@@ -14,7 +14,7 @@ export const TRACER_INSTALLED = true;
 export const LINGUASPY_DEMO_INSTALLED = true;
 
 export interface Project {
-  slug: 'linguaspy' | 'raytracer' | 'titaninfer';
+  slug: 'hitreglab' | 'linguaspy' | 'raytracer' | 'titaninfer';
   name: string;
   pitch: string;
   /** Shorter pitch shown at phone width, so all three projects fit in the first two screens. */
@@ -25,6 +25,15 @@ export interface Project {
 }
 
 export const projects: Project[] = [
+  {
+    slug: 'hitreglab',
+    name: 'Hitreg Lab',
+    pitch:
+      "A UE5 C++ first-person test range for how shots feel and register: data-driven weapons, controller aim assist, client prediction with server-side rewind lag compensation, a peeker's-advantage meter and a kill cam, all measured over a dedicated server.",
+    short: "A UE5 C++ FPS lab: lag compensation, peeker's advantage, aim assist and a kill cam, all measured.",
+    meta: 'Unreal Engine 5.8, C++. Nov 2026.',
+    source: 'https://github.com/HamoodiM/HitregLab',
+  },
   {
     slug: 'linguaspy',
     name: 'LinguaSpy',
@@ -43,6 +52,10 @@ export const projects: Project[] = [
     meta: 'Solo. C++17, CMake. Oct 2025, fixes and BVH Nov 2026.',
     source: 'https://github.com/HamoodiM/Raytracer',
   },
+];
+
+/** Not on the home page any more; its page stays up and is linked from About. */
+export const otherProjects: Project[] = [
   {
     slug: 'titaninfer',
     name: 'TitanInfer',

@@ -4,19 +4,19 @@ import Hero from '../components/Hero.astro';
 import WorkIndex from '../components/WorkIndex.astro';
 import ChapterLinguaSpy from '../components/ChapterLinguaSpy.astro';
 import ChapterRaytracer from '../components/ChapterRaytracer.astro';
-import ChapterTitanInfer from '../components/ChapterTitanInfer.astro';
+import ChapterHitregLab from '../components/ChapterHitregLab.astro';
 import About from '../components/About.astro';
 ---
 <Base
   title="Mohammad Mohammad, gameplay and graphics programming"
-  description="Portfolio of Mohammad Mohammad, a Carleton computer science student looking for a Summer 2027 gameplay programming or software engineering internship. LinguaSpy (UE5 C++), a C++ path tracer, and TitanInfer."
+  description="Portfolio of Mohammad Mohammad, a Carleton computer science student looking for a Summer 2027 gameplay programming or software engineering internship. Hitreg Lab (UE5 C++ netcode and lag compensation), LinguaSpy (UE5 C++), and a C++ path tracer."
   jsonLd
   page="home"
 >
   <Hero />
   <WorkIndex />
+  <ChapterHitregLab />
   <ChapterLinguaSpy />
   <ChapterRaytracer />
-  <ChapterTitanInfer />
   <About />
 </Base>

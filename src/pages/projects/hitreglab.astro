@@ -1,0 +1,160 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProjectHead from '../../components/ProjectHead.astro';
+import CodeFigure from '../../components/CodeFigure.astro';
+import { Image, getImage } from 'astro:assets';
+import '../../styles/project.css';
+import { url, RESUME } from '../../data/site';
+import still from '../../assets/hitreglab/still_lagcomp.png';
+import killcam from '../../assets/hitreglab/still_killcam.png';
+import hitregChart from '../../assets/hitreglab/hitreg_registration.png';
+import peekChart from '../../assets/hitreglab/peek_advantage.png';
+
+const HL = 'https://github.com/HamoodiM/HitregLab/blob/main/';
+const poster = await getImage({ src: still, width: 1280, format: 'webp', quality: 75 });
+
+const renderTime = `
+// Snapshots stamped at server time T arrive here at about T + one-way latency, so the newest data we can
+// have is (Now - RTT/2). Render a fixed interpolation delay behind that, so there's always a pair to blend.
+const AHLGameState* GS = World->GetGameState<AHLGameState>();
+const AHLPlayerController* PC = Cast<AHLPlayerController>(World->GetFirstPlayerController());
+const int32 InterpTicks = PC ? PC->InterpTicks : 2;
+const double OneWay = (PC && PC->Clock) ? PC->Clock->GetBestRttMs() / 2000.0 : 0.0;
+return Now - OneWay - (GS ? GS->GetInterpDelaySeconds(InterpTicks) : 0.05);`;
+
+const rewind = `
+const double TraceTime = bRewind ? FMath::Clamp(ViewTime, Now - MaxRewind, Now) : Now;
+...
+for (TActorIterator<AHLCharacter> It(World); It; ++It)
+{
+    AHLCharacter* Target = *It;
+    if (Target == Shooter || !Target->IsAlive())
+    {
+        continue;
+    }
+    FHLPose Pose = Target->GetPose();
+    if (bRewind && TraceTime < Now)
+    {
+        GetPoseAt(Target, TraceTime, Pose);
+    }
+    FHLHitboxHit Hit;
+    if (HLHitboxMath::RayHitboxes(Origin, Dir, Limit, Target->Hitboxes, Pose, Hit) && ...)`;
+
+const limiter = `
+bool TryConsume(double Now, float ShotsPerSecond)
+{
+    if (LastTime >= 0.0)
+    {
+        Tokens = FMath::Min(Burst, Tokens + float(Now - LastTime) * ShotsPerSecond * 1.1f);
+    }
+    LastTime = Now;
+    if (Tokens < 1.f)
+    {
+        return false;
+    }
+    Tokens -= 1.f;
+    return true;
+}`;
+---
+<Base
+  title="Hitreg Lab, Mohammad Mohammad"
+  description="Hitreg Lab: a UE5 C++ first-person test range. Client-predicted firing, server-side rewind lag compensation, a peeker's-advantage meter, controller aim assist and a kill cam, all measured over a dedicated server."
+  page="hitreglab"
+>
+  <ProjectHead slug="hitreglab" title="Hitreg Lab" lede="A first-person test range in Unreal Engine 5 and C++ for how shots feel and how they register. Every system is measured over a dedicated server with two clients, not just built.">
+    <figure slot="media" class="trailer">
+      <video controls preload="none" playsinline width="1280" height="720" poster={poster.src} aria-label="38-second demo of Hitreg Lab">
+        <source src={url('media/hitreglab/hitreglab-demo.mp4')} type="video/mp4" />
+      </video>
+      <figcaption class="small muted">Lag compensation at 150 ms round trip (server-rewound hitboxes in green, current position in red), then off, the measurements, and the kill cam.</figcaption>
+    </figure>
+    <div class="tldr">
+      <dl class="facts">
+        <dt>Engine</dt><dd>Unreal Engine 5.8, C++ (game module and an editor module)</dd>
+        <dt>Dates</dt><dd>Nov 2026</dd>
+        <dt>Tests</dt><dd>13 headless automation tests, plus three measurement harnesses that run on a dedicated server</dd>
+        <dt>Code</dt><dd><a href="https://github.com/HamoodiM/HitregLab">github.com/HamoodiM/HitregLab</a></dd>
+      </dl>
+      <div>
+        <h2>Worth a look</h2>
+        <ul>
+          <li><a href="#results">The results</a>: hit registration with and without lag compensation, and peeker's advantage across tick rate and latency.</li>
+          <li><a href="#pipeline">The shot pipeline</a>: prediction, the client's view time, and the server rewind.</li>
+          <li><a href="#bugs">Two bugs the measurements caught</a>.</li>
+        </ul>
+        <p class="tldr__links"><a href={RESUME}>Résumé (PDF)</a><a href={url('#hitreglab')}>On the home page</a></p>
+      </div>
+    </div>
+  </ProjectHead>
+
+  <div class="longform">
+    <div class="wrap prose">
+      <h2>What's in it</h2>
+      <ul>
+        <li><strong>Weapons</strong> as data assets: fire mode, RPM, damage falloff, spread bloom, recoil patterns and ADS. Firing is frame-rate independent: a fire clock works out which shots fall inside each frame at their exact times.</li>
+        <li><strong>Client-predicted firing.</strong> The shooter sees the hit marker and tracer immediately. The server validates fire rate, origin and timestamps, then confirms or retracts the marker.</li>
+        <li><strong>Lag compensation.</strong> The server records every character's pose each frame and traces shots against hitboxes rewound to the moment the shooter saw, capped at 200 ms.</li>
+        <li><strong>Controller aim assist:</strong> a radial dead zone and response curve, slowdown near targets, rotational pull that only acts while you're giving input, and bullet magnetism. An editor tab tunes it live and benchmarks it.</li>
+        <li><strong>A peeker's-advantage meter</strong> and a <strong>hit-registration bench</strong> that run unattended on a dedicated server.</li>
+        <li><strong>A kill cam:</strong> the last few seconds replayed from the killer's eyes, with scrubbing and slow motion. Replays save to a versioned file for bug reports.</li>
+      </ul>
+
+      <h2 id="results">Results</h2>
+      <p>For the lag compensation bench, a client aims perfectly at a strafing target <em>as it draws it</em> and fires single taps. The chart shows how many of those on-screen hits the server confirmed. With compensation, every one registered up to 150 ms round trip. Without it, 68% registered even at 0 ms, because remote players are drawn about two ticks in the past, and 23–30% at real pings. At 250 ms the 200 ms rewind cap kicks in on purpose, so nobody can be shot more than 200 ms after reaching cover.</p>
+    </div>
+    <div class="wrap">
+      <figure class="hl-chart">
+        <Image src={hitregChart} alt="Bar chart: with lag compensation, 100% of on-screen hits registered at 0, 50, 100 and 150 ms round trip, and 34% at 250 ms. Without it: 68%, 30%, 23%, 27% and 13%." widths={[640, 960, 1200]} sizes="(min-width: 60rem) 52rem, 100vw" loading="lazy" />
+      </figure>
+    </div>
+    <div class="wrap prose">
+      <p>For the peeker's-advantage meter, a scripted peeker strafes past a corner while a holder watches it. Each client reports, in synced server time, when its own screen first showed the other player. The gap is the peeker's advantage: 160 trials across round trip, tick rate and interpolation delay. Lag compensation doesn't remove it. It decides who wins a trade of shots, not who sees whom first. Higher tick rates and a shorter interpolation delay help, but latency dominates.</p>
+    </div>
+    <div class="wrap">
+      <figure class="hl-chart">
+        <Image src={peekChart} alt="Line chart of peeker's advantage against server tick rate for four round-trip times. It falls from 175 to 45 ms at 0 ms round trip as tick rate goes from 20 to 128 Hz, and from 365 to 198 ms at 150 ms." widths={[640, 960, 1200]} sizes="(min-width: 60rem) 52rem, 100vw" loading="lazy" />
+      </figure>
+    </div>
+    <div class="wrap prose">
+      <h2 id="pipeline">The shot pipeline</h2>
+      <p>Remote players are drawn from timestamped server snapshots at a fixed delay behind the newest snapshot that can have arrived. Because the client knows exactly when it is drawing them, it can send that time with each shot:</p>
+      <CodeFigure href={`${HL}Source/HitregLab/Core/HLCharacter.cpp#L283-L289`} file="Source/HitregLab/Core/HLCharacter.cpp" lines="283–289" code={renderTime} />
+      <p>The server clamps that view time to the rewind cap and tests each character's hitboxes at the pose it had then. Hitboxes are spheres and boxes tested with plain ray maths, so rewinding means evaluating an old pose, not teleporting colliders. A shot costs tens of microseconds, and most of that is the world trace.</p>
+      <CodeFigure href={`${HL}Source/HitregLab/Net/HLLagCompensationSubsystem.cpp#L81-L112`} file="Source/HitregLab/Net/HLLagCompensationSubsystem.cpp" lines="81–112" code={rewind} />
+      <p>The server doesn't trust the client's fire rate. A token bucket refills at the gun's rate plus 10% and holds up to three shots, so packets that arrive bunched together pass, but a modified client can't out-fire the gun. An automation test feeds it a client firing at double rate.</p>
+      <CodeFigure href={`${HL}Source/HitregLab/Weapons/HLWeaponDefinition.h#L174-L187`} file="Source/HitregLab/Weapons/HLWeaponDefinition.h" lines="174–187" code={limiter} />
+      <p>The client's clock is its own NTP-style estimate: it pings the server and keeps the offset from the lowest-round-trip sample. In the same runs, the engine's built-in game-state clock was off by 40–70 ms, which is enough to rewind to the wrong place.</p>
+
+      <h2 id="bugs">Two bugs the measurements caught</h2>
+      <ol>
+        <li><strong>Moves that never reached the server.</strong> I turned off the engine's replicated movement so remote players would only be drawn from my snapshots. The peek test showed the peeker moving on its own screen but never on the holder's. The engine's character movement only sends a client's moves to the server when the actor replicates movement. The fix: keep it on, and have remote players ignore the engine's replicated position.</li>
+        <li><strong>Drawing the future.</strong> Remote players were first drawn at <code>server time − interpolation delay</code>. That is ahead of the newest snapshot a client can have, so they just froze on the latest one. The rewind test caught it once its client buffer only held snapshots that would actually have arrived.</li>
+      </ol>
+
+      <h2>Aim assist, measured</h2>
+      <p>A scripted thumb (200 ms reaction delay, tremor, stick saturation) tries to put the crosshair on a strafing target's head 20 m away. Over 50 seeded trials, full assist cut the median time to acquire from 1408 to 1308 ms and raised tracking from 11% to 16%. It's a modest effect, and the point is that it's measured. The first version of the thumb never acquired in either mode; it needed to account for its own movement since the frame it was reacting to, which is how people aim too.</p>
+
+      <h2>Kill cam</h2>
+    </div>
+    <div class="wrap">
+      <figure class="hl-chart">
+        <Image src={killcam} alt="Kill cam: the arena seen from the killer's eyes, with the playback timeline, its shots and the killing shot marked along the bottom." widths={[640, 960, 1280]} sizes="(min-width: 60rem) 52rem, 100vw" loading="lazy" />
+      </figure>
+    </div>
+    <div class="wrap prose">
+      <p>Each client records what it displayed (every character at 30 Hz, plus tracers) in an 8-second ring, quantized to 16 bytes per pose: about 670 bytes per second per player. On death, the last few seconds play back from the killer's eyes, with slow motion around the kill. Recording on the client costs no bandwidth. The trade-off is that the clip shows the victim's view of the killer, not the killer's own screen. A save/load round trip is tested to reproduce identical frames, and a file from a newer format version is refused rather than misread.</p>
+
+      <h2>How I built this</h2>
+      <p>I directed the project: what to build, what to measure and how to read the results. Claude Code wrote the implementation as my AI coding assistant, and the commit history says so. The walkthrough in the repo (<code>docs/WALKTHROUGH.md</code>) is how I check that I can explain every system.</p>
+
+      <p><a href={url('#work')}>Back to all projects</a></p>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .trailer video { width: 100%; height: auto; aspect-ratio: 16 / 9; background: #111; }
+  .trailer figcaption { margin-top: 0.5rem; }
+  .hl-chart { max-width: 52rem; margin: 1.5rem 0 2rem; }
+  .hl-chart :global(img) { width: 100%; height: auto; background: #fff; }
+</style>

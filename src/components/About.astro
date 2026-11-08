@@ -1,5 +1,5 @@
 ---
-import { RESUME, GITHUB, LINKEDIN, EMAIL } from '../data/site';
+import { RESUME, GITHUB, LINKEDIN, EMAIL, url } from '../data/site';
 ---
 <section class="about" id="about" aria-labelledby="about-h">
   <div class="wrap about__grid">
@@ -8,6 +8,7 @@ import { RESUME, GITHUB, LINKEDIN, EMAIL } from '../data/site';
       <p>I'm a computer science student at Carleton University (B.C.S. Honours, AI and Machine Learning stream), graduating in May 2028, and I want to spend my career on the code that decides how a game feels in your hands.</p>
       <p>I play Black Ops&nbsp;6 and Overwatch, and that's a big part of why I'm aiming at gameplay programming: movement, gunplay and hit registration are the systems I most want to build.</p>
       <p>My day job is testing other people's software. Since May 2026 I've been a QA automation developer at the Department of National Defence, on a C# framework that turns recorded interactions into Excel-driven Selenium tests. I built its debug mode: a failed run pauses, the tester fixes the step in the spreadsheet, and the run resumes from the last passing step. Before that, from January to April 2026, I was an IP network engineering intern at Nokia, writing Python and Tcl regression suites for protocol state machines. Both jobs left me with a habit you'll see across these projects: if a system matters, it gets an automated test.</p>
+      <p>Also on this site: <a href={url('projects/titaninfer/')}>TitanInfer</a>, a C++20 neural-network inference library with a cache-blocked AVX2 matrix multiply.</p>
       <p class="about__contact">The fastest way to reach me is email: <a href={`mailto:${EMAIL}`}>{EMAIL}</a>. My <a href={RESUME}>résumé is a PDF</a>, my code is on <a href={GITHUB}>GitHub</a>, and my work history is on <a href={LINKEDIN}>LinkedIn</a>.</p>
     </div>
   </div>

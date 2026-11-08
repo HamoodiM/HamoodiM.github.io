@@ -1,0 +1,64 @@
+---
+import { Image } from 'astro:assets';
+import LoopVideo from './LoopVideo.astro';
+import still from '../assets/hitreglab/still_lagcomp.png';
+import hitregChart from '../assets/hitreglab/hitreg_registration.png';
+import peekChart from '../assets/hitreglab/peek_advantage.png';
+import { url } from '../data/site';
+---
+<section class="ch-hl" id="hitreglab" aria-labelledby="hl-h">
+  <div class="wrap">
+    <header class="ch-hl__head">
+      <h2 id="hl-h" data-reveal>Hitreg Lab</h2>
+      <div class="prose">
+        <p>A first-person test range in Unreal Engine 5 and C++ for studying how shots feel and how they register. It has data-driven weapons, controller aim assist, client-predicted firing with server-side rewind lag compensation, a peeker's-advantage meter and a kill cam. Every system is measured over a dedicated server with two clients, not just built.</p>
+      </div>
+    </header>
+
+    <LoopVideo
+      src={url('media/hitreglab/hitreglab-demo.mp4')}
+      poster={still}
+      label="38-second demo: lag compensation on and off at 150 ms ping with rewound hitboxes drawn, the two result charts, and a kill cam replayed from the killer's view."
+      caption="38 seconds: lag compensation at 150 ms ping (rewound hitboxes green, current red), then off, the measurements, and the kill cam."
+    />
+
+    <ul class="ch-hl__nums">
+      <li><strong>100%</strong><span>of on-screen hits registered up to 150 ms ping with lag compensation, vs 23–30% without</span></li>
+      <li><strong>76 → 247 ms</strong><span>peeker's advantage at 60 Hz as round trip goes from 0 to 150 ms (160 measured trials)</span></li>
+      <li><strong>~4 ms</strong><span>clock-sync error under 40 ms jitter; the engine's own clock was off by 40–70 ms</span></li>
+    </ul>
+
+    <div class="ch-hl__charts">
+      <figure>
+        <Image src={hitregChart} alt="Bar chart: with lag compensation, 100% of on-screen hits registered at 0, 50, 100 and 150 ms round trip, and 34% at 250 ms where the 200 ms rewind cap applies. Without it: 68%, 30%, 23%, 27% and 13%." widths={[480, 800, 1200]} sizes="(min-width: 60rem) 30rem, 100vw" loading="lazy" />
+        <figcaption class="small muted">Perfect aim at what the client draws, single taps. Share the server confirmed.</figcaption>
+      </figure>
+      <figure>
+        <Image src={peekChart} alt="Line chart: peeker's advantage falls as tick rate rises from 20 to 128 Hz and grows with round-trip time, from 45 ms (0 ms, 128 Hz) to 365 ms (150 ms, 20 Hz)." widths={[480, 800, 1200]} sizes="(min-width: 60rem) 30rem, 100vw" loading="lazy" />
+        <figcaption class="small muted">Lag compensation doesn't remove peeker's advantage. Tick rate and interpolation shrink it; latency dominates.</figcaption>
+      </figure>
+    </div>
+
+    <p class="ch-hl__links">
+      <a href={url('projects/hitreglab/')}>Read the write-up: the shot pipeline, the rewind, and two bugs the measurements caught</a>
+      <a href="https://github.com/HamoodiM/HitregLab">Source on GitHub</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .ch-hl { padding-block: clamp(4rem, 8vw, 7rem); border-top: 1px solid var(--rule); }
+  .ch-hl__head { display: grid; gap: 1rem; margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+  .ch-hl__head h2 { font-size: var(--step-4); }
+  .ch-hl__nums { list-style: none; padding: 0; margin: clamp(1.5rem, 3vw, 2.5rem) 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1rem, 2.5vw, 2rem); border-top: 1px solid var(--rule); }
+  .ch-hl__nums li { display: grid; gap: 0.2rem; padding-top: 0.9rem; }
+  .ch-hl__nums strong { font-family: var(--font-display); font-weight: 500; font-size: var(--step-2); }
+  .ch-hl__nums span { font-size: var(--step--1); color: var(--ink-2); line-height: 1.4; }
+  .ch-hl__charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 2.5vw, 2rem); }
+  .ch-hl__charts figure { display: grid; gap: 0.5rem; }
+  .ch-hl__charts :global(img) { width: 100%; height: auto; background: #fff; }
+  .ch-hl__links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-top: clamp(1.5rem, 3vw, 2.5rem); }
+  @media (max-width: 48rem) {
+    .ch-hl__nums, .ch-hl__charts { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
