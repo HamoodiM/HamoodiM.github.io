@@ -5,7 +5,7 @@ import LoopVideo from './LoopVideo.astro';
 import paris from '../assets/linguaspy/03_paris_grader_hint.png';
 import madrid from '../assets/linguaspy/10_madrid.png';
 import tokyo from '../assets/linguaspy/07_tokyo_romaji_tiles.png';
-import menu from '../assets/linguaspy/01_main_menu.png';
+import rome from '../assets/linguaspy/13_rome_piazza.png';
 import { linguaspyMedia } from '../data/media';
 import { url, LINGUASPY_DEMO_INSTALLED } from '../data/site';
 
@@ -25,12 +25,10 @@ const cities = [
     alt: 'Tokyo: the spy at a konbini. Japanese tiles kudasai, o, onigiri carry romaji readings, and the wrong tiles are highlighted.',
     facts: ['3 conversations, 1 mission', 'Konbini Contact: buy an onigiri from Sato-san', 'Unspaced chunk tiles with optional romaji readings; text only because of the voice licence'],
   },
-  // TODO-USER: Rome shows the main-menu card because there is no in-game Rome capture yet. Capture one
-  // (an Italian conversation), add it to src/assets/linguaspy/, import it and use it here.
   {
-    id: 'rome', name: 'Rome', lang: 'Italian', img: menu,
-    alt: 'The LinguaSpy main menu: four city cards for Paris, Madrid, Tokyo and Rome, each with its language and mission count.',
-    facts: ['3 conversations, 1 mission', 'Text only for now', 'Operazione Colosseo is still to be built', 'No in-game capture of Rome yet, so this is its card on the main menu'],
+    id: 'rome', name: 'Rome', lang: 'Italian', img: rome,
+    alt: "Rome: the spy meets Giulia in a sunlit piazza. She asks Posso aiutarla?, the handler translates, and the reply Scusi dov'è la fontana is being built from Italian word tiles.",
+    facts: ['3 conversations, 1 mission', 'Protocollo Espresso: ask Giulia the way to the fountain', 'Text only for now; Operazione Colosseo is still to be built'],
   },
 ];
 ---
@@ -50,13 +48,13 @@ const cities = [
         <div class="brief">
           <div class="brief__text" data-redact>
             <p>A top-down spy game about learning a language, in Unreal Engine 5.8 and C++. You're undercover in Paris, Madrid, Tokyo or Rome and keep your cover by answering locals in French, Spanish, Japanese or Italian. Wrong answers drain the cover meter. Blow it and you're sent back to drill the phrases you missed.</p>
-            <p>What's in the C++: a sentence grader that marks each word and spots accent-only mistakes, a Leitner spaced-repetition scheduler, a policy that picks the exercise type from how well you know a phrase, branching dialogue and mission graphs stored as data assets, a versioned save format with migrations, and a Slate editor tab for authoring conversations. 19 automation tests cover the pure logic.</p>
+            <p>What's in the C++: a sentence grader that marks each word and spots accent-only mistakes, a Leitner spaced-repetition scheduler, a policy that picks the exercise type from how well you know a phrase, branching dialogue and mission graphs stored as data assets, a versioned save format with migrations, and a Slate editor tab for authoring conversations. 23 automation tests cover the pure logic.</p>
           </div>
           <dl class="brief__facts">
             <dt>Engine</dt><dd>Unreal Engine 5.8</dd>
-            <dt>C++</dt><dd>About 14,000 lines in the game and editor modules, 776 of them tests</dd>
+            <dt>C++</dt><dd>About 14,000 lines in the game and editor modules, about 960 of them tests</dd>
             <dt>Python</dt><dd>About 4,000 lines of editor tooling</dd>
-            <dt>Built</dt><dd>Sept 29 to Oct 4, 2026, 26 commits</dd>
+            <dt>Built</dt><dd>Sept 29 to Oct 4, 2026 (26 commits); visual polish Nov 2026 (10 more)</dd>
             <dt>Build</dt><dd>A Windows Shipping build packages</dd>
           </dl>
         </div>
@@ -86,8 +84,7 @@ const cities = [
                   <Image src={c.img} alt={c.alt} widths={[480, 800, 1200]} sizes="(min-width: 60rem) 38rem, 100vw" loading="lazy" decoding="async" class="city__img" />
                 ) : (
                   <div class="city__noimg">
-                    <p>No capture of Rome yet.</p>
-                    {/* TODO-USER: capture a Rome screenshot (a conversation in Italian) and add it to src/assets/linguaspy/, then set img for 'rome' in ChapterLinguaSpy.astro. */}
+                    <p>No capture yet.</p>
                   </div>
                 )}
                 <ul class="city__facts">

@@ -107,7 +107,6 @@ for (size_t i = 1; i < model_->size(); ++i) {
     </div>
   </ProjectHead>
 
-  {/* TODO-USER: record a benchmark run (matrix_benchmark, Release, CPU visible) and a model loaded from PyTorch with profiling on. A clip or screenshot can go next to the cache model above. */}
 
   <div class="longform">
     <div class="wrap prose">
@@ -134,8 +133,18 @@ for (size_t i = 1; i < model_->size(); ++i) {
       <p>The SIMD matmul tiles the loops into 64 × 256 × 64 blocks (MC, KC, NC) so each block's working set stays in cache, then runs an 8-wide inner loop along K. A horizontal add at the end collapses the 8 lanes into one value, and a scalar loop handles the remainder. The model at the top of this page runs the same loop order on 16 × 16 matrices with a 24-line cache, so you can watch which lines get reused.</p>
       <CodeFigure href={`${TI}src/ops/matrix_ops_simd.cpp#L124-L144`} file="src/ops/matrix_ops_simd.cpp" lines="124–144" code={kernel} />
       <p>The kernel isn't on the inference path yet: the Dense, fused and Conv2D layers still call the scalar <code>ops::matmul</code> and <code>ops::matvec</code>. Routing them through the AVX2 kernel is the first next step.</p>
-      <p>The kernel's own weak point is the load of B. B is row-major, so 8 consecutive K values for one column are N floats apart, and the kernel gathers them with <code>_mm256_set_ps</code> from 8 scalar loads. I expect that gather to be the bottleneck, but I haven't profiled it yet. The next step is to pack each block of B into a contiguous, transposed buffer once, then compute several output columns per pass so each A load is reused.</p>
-      <p class="todo">TODO-USER: run <code>matrix_benchmark</code> (Release, note the CPU) and add the measured naive vs AVX2 times here. Don't quote the "3-5x" from the old README until you've measured it.</p>
+      <p>The kernel's own weak point is the load of B. B is row-major, so 8 consecutive K values for one column are N floats apart, and the kernel gathers them with <code>_mm256_set_ps</code> from 8 scalar loads. The benchmark below points at that gather as the bottleneck, though I haven't profiled it yet. The next step is to pack each block of B into a contiguous, transposed buffer once, then compute several output columns per pass so each A load is reused.</p>
+      <p>Measured with <code>matrix_benchmark</code> (Release, MSVC <code>/arch:AVX2</code>, Google Benchmark, median of 3) on an Intel Core i5-14400F, Nov 2026:</p>
+      <table>
+        <thead><tr><th scope="col">Size</th><th scope="col">Naive</th><th scope="col">AVX2 kernel</th><th scope="col">Speed-up</th></tr></thead>
+        <tbody>
+          <tr><td>64 × 64</td><td>70.6 µs</td><td>62.5 µs</td><td>1.13×</td></tr>
+          <tr><td>128 × 128</td><td>0.90 ms</td><td>0.73 ms</td><td>1.23×</td></tr>
+          <tr><td>256 × 256</td><td>8.92 ms</td><td>8.40 ms</td><td>1.06×</td></tr>
+          <tr><td>512 × 512</td><td>69.6 ms</td><td>69.1 ms</td><td>1.01×</td></tr>
+        </tbody>
+      </table>
+      <p>So the kernel barely beats the naive loop, and the gain shrinks as the matrices grow. That fits the gather: past 128 × 128 the strided loads of B dominate, and blocking can't help while every 8-wide FMA waits on 8 scalar loads. The old README's "3-5x" was never measured, and it's gone. Packing B is the fix I'd make first, then re-run this table.</p>
 
       <h2 id="format">The .titan model format</h2>
       <p>A <code>.titan</code> file starts with the magic bytes <code>TITN</code> and a format version, followed by a layer count and, for each layer, a type id, its shape parameters and its float weights. The parser refuses files from a newer format version than it knows instead of misreading them:</p>
@@ -156,17 +165,7 @@ for (size_t i = 1; i < model_->size(); ++i) {
       </ul>
 
       <h2>How I built this</h2>
-      {/* TODO-USER: choose one wording (or write your own), put it in the paragraph below, and delete this comment and the bracketed note.
-      Facts to stay consistent with: 2 of the 29 commits (both on 2026-03-28, "Titaninfer Cleanup Patch") carry "Co-Authored-By: Claude Sonnet 4.6". No agent files are in the repo. If you used AI on other commits, say so.
-
-      Option A (if AI use was limited to the cleanup):
-      "I wrote TitanInfer myself over February and March 2026. For the final cleanup commits I used Claude (Anthropic) to help with refactoring and CI fixes, and those commits are marked as co-authored."
-
-      Option B (if AI helped throughout):
-      "I built TitanInfer with AI coding assistants, mainly Claude (Anthropic), for drafting code and tests. I planned the phases and the design (tensor layout, kernel blocking, file format, engine buffers), reviewed the code, and debugged the CI failures on Linux and Windows."
-
-      The cache model on this page was written for this site, not taken from the repo. */}
-      <p class="todo">[choose disclosure wording] TODO-USER</p>
+      <p>I designed and built TitanInfer over February and March 2026. The final cleanup commits were made with an AI assistant and are marked as co-authored. The cache model on this page was written for this site.</p>
       <p><a href={url('#work')}>Back to all projects</a></p>
     </div>
   </div>

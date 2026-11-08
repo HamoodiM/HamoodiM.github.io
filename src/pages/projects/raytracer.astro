@@ -14,7 +14,7 @@ import materials from '../../assets/raytracer/hero_materials.png';
 import nmapFinal from '../../assets/raytracer/nmap_final.png';
 import knotFlatSmooth from '../../assets/raytracer/knot_flat_vs_smooth.png';
 
-const BR = `${RT_REPO}/blob/portfolio-fixes/`;
+const BR = `${RT_REPO}/blob/main/`;
 const OLD = `${RT_REPO}/blob/b79885c7bbb59f0ca26702afc4524f9ee90353e8/`;
 
 const rngOld = `
@@ -170,8 +170,6 @@ bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& re
         <dt>Based on</dt><dd><cite>Ray Tracing in One Weekend</cite> series (Peter Shirley and contributors)</dd>
         <dt>Code</dt><dd><a href={RT_REPO}>github.com/HamoodiM/Raytracer</a></dd>
       </dl>
-      {/* TODO-USER: the git history only covers Oct 21-22, 2025, while the old resume said Dec 2024. If you worked on it earlier outside git, say so here in one line; otherwise keep these dates and fix the resume. */}
-      {/* TODO-USER: merge portfolio-fixes into main and push before publishing. The commit links and "portfolio-fixes" file links on this page only resolve after the push. */}
       <div>
         <h2>Worth a look</h2>
         <ul>
@@ -187,7 +185,6 @@ bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& re
   <div class="longform">
     <div class="wrap prose">
       <p>I started from Peter Shirley's <a href="https://raytracing.github.io/"><cite>Ray Tracing in One Weekend</cite></a> series, and the camera, the <code>scatter()</code> material interface, the Lambertian, metal and dielectric materials and the sampling helpers follow it closely. I extended it with planes and triangles, explicit sampling of point and area lights, normal maps, JSON scene files and an interactive progressive viewer.</p>
-      {/* TODO-USER: check the "extended with" list against what you remember adding yourself, and adjust. */}
       <p>A year later a code review of the repo found bugs in the sampling and shading, and found that the README claimed a BVH, OpenMP and Russian roulette that the code didn't have. This page is about fixing that: what was wrong, why it showed up in the image, and how I checked the fix.</p>
 
       <h2>What it does now</h2>
@@ -315,14 +312,7 @@ bool Triangle::hit(const core::Ray& ray, float t_min, float t_max, HitRecord& re
       </ul>
 
       <h2>How I built this</h2>
-      {/* TODO-USER: choose one wording (or write your own), edit it until every sentence is true, put it in the paragraph below, and delete this comment and the bracketed note.
-      Facts to stay consistent with: the 3 original commits have no AI co-author lines. The fix commits on portfolio-fixes (Nov 2026) say "Prepared with Claude Code for review" in their messages. The browser build (web_entry.cpp, workers) was also written with Claude. The Ray Tracing in One Weekend credit is stated at the top of the page.
-
-      Option A:
-      "I wrote the original tracer while working through the book series, then added the extensions listed at the top. The fixes, the BVH, OpenMP and the WebAssembly build were prepared with Claude Code from a review of my repo; I reviewed each commit, and the renders and tests on this page are how I checked them."
-
-      Option B: write your own. */}
-      <p class="todo">[choose disclosure wording] TODO-USER</p>
+      <p>I wrote the original tracer while working through the book series. I led the 2026 review and fixes, and used Claude Code as a coding assistant for them; the renders and tests on this page are how I checked each one.</p>
       <p><a href={url('#work')}>Back to all projects</a></p>
     </div>
   </div>

@@ -17,7 +17,8 @@ export async function createCore(module, files = {}, log) {
     files,
     log: (fd, line) => {
       if (fd === 2) stderr.push(line);
-      (log || ((fd, l) => (fd === 2 ? console.warn : console.log)("[tracer]", l)))(fd, line);
+      // Default: stdout ("Loaded texture ..." once per worker) stays quiet; stderr still warns.
+      (log || ((fd, l) => { if (fd === 2) console.warn("[tracer]", l); }))(fd, line);
     },
   });
   const instance = await WebAssembly.instantiate(module, wasi.imports);

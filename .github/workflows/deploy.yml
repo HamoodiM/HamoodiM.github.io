@@ -1,12 +1,10 @@
 # Official Astro -> GitHub Pages workflow (https://docs.astro.build/en/guides/deploy/github/).
-# NOT ACTIVATED: it only runs when started by hand (workflow_dispatch). To deploy on every push,
-# uncomment the push trigger below, then in the repo: Settings > Pages > Source: GitHub Actions.
-# TODO-USER: set SITE_URL / BASE_PATH below for your repo (see README, "Deploy").
+# Deploys on every push to main (user site, repo HamoodiM.github.io). In the repo: Settings > Pages > Source: GitHub Actions.
 name: Deploy to GitHub Pages
 
 on:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

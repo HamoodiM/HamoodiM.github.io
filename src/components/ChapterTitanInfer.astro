@@ -16,8 +16,7 @@ import { url } from '../data/site';
         <p>A plain triple loop walks a whole column of B for every element of C. By the time the next row of C needs that column again, the cache has thrown it out, so the same data comes from memory over and over.</p>
         <p>The AVX2 kernel cuts the loops into blocks (MC × KC of A, KC × NC of B) sized so one block of each stays in cache while it is reused, then runs an 8-wide fused multiply-add along K. Press Play, then switch to Unblocked and compare the lines loaded.</p>
         <p>The weak spot shows up here too: B is row-major, so the 8 values of one B column sit N floats apart and the kernel gathers them with <code>_mm256_set_ps</code> from 8 scalar loads. Packing each B block into a contiguous, transposed buffer is the next step.</p>
-        <p class="ch-ti__honest">The kernel is tested and benchmarked on its own, but the layers don't call it yet: Dense, the fused layers and Conv2D still use the scalar matmul. I haven't recorded benchmark numbers, so this page doesn't quote a speed-up.</p>
-        <!-- TODO-USER: run matrix_benchmark (Release, note the CPU) and add measured naive vs AVX2 times here. Don't quote the "3-5x" from the old README until you've measured it. -->
+        <p class="ch-ti__honest">The kernel is tested and benchmarked on its own, but the layers don't call it yet: Dense, the fused layers and Conv2D still use the scalar matmul. Measured on an i5-14400F, it's only 1.0–1.2× faster than the naive loop, because the gather from B eats the gain.</p>
       </div>
       <MatmulViz />
     </div>

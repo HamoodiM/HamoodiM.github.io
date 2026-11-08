@@ -155,13 +155,12 @@ const shots = [
     <div class="tldr">
       <dl class="facts">
         <dt>Role</dt><dd>Solo: game design, C++, content scripts and the character pipeline</dd>
-        <dt>Dates</dt><dd>Sept 29 to Oct 4, 2026 (26 commits)</dd>
+        <dt>Dates</dt><dd>Sept 29 to Oct 4, 2026 (26 commits); visual polish Nov 7–8, 2026 (10 commits)</dd>
         <dt>Engine</dt><dd>Unreal Engine 5.8</dd>
-        <dt>Languages</dt><dd>C++, about 14,000 lines in the game and editor modules (776 of them tests). Python, about 4,000 lines of editor tooling.</dd>
+        <dt>Languages</dt><dd>C++, about 14,000 lines in the game and editor modules (about 960 of them tests). Python, about 4,000 lines of editor tooling.</dd>
         <dt>Status</dt><dd>Prototype v0.5. A Windows Shipping build packages. I played all four cities with mouse and keyboard on Sept 29; the newer learning loop (briefings, hints, debriefs) has so far been checked with scripted play-in-editor runs.</dd>
         <dt>Code</dt><dd><a href="https://github.com/HamoodiM/LinguaSpy">github.com/HamoodiM/LinguaSpy</a></dd>
-        {/* TODO-USER: the LinguaSpy repo is private, so the link above and the source links below are dead for visitors. Push the 7 local commits, make the repo public, then delete this comment. */}
-        <dt>Build</dt><dd class="todo">TODO-USER: upload the Windows build (for example to itch.io) and link it here, or delete this row.</dd>
+        <dt>Build</dt><dd><a href="https://github.com/HamoodiM/LinguaSpy/releases/latest">Windows build (zip) on GitHub Releases</a></dd>
       </dl>
       <div>
         <h2>Worth a look</h2>
@@ -199,11 +198,8 @@ const shots = [
       <p>You answer a local by arranging word tiles or, once you know a phrase well, by typing it. Each challenge stores one or more accepted answers as token lists. Before comparing, every token goes through <code>NormalizeToken</code>: punctuation is stripped from both ends (including «», ¿, ¡ and full-width Japanese punctuation), the text is lower-cased with <code>FText::ToLower</code> because <code>FString::ToLower</code> only folds ASCII and would leave "CAFÉ" as "cafÉ", and curly apostrophes become straight ones.</p>
       <p>Then the player's tokens are compared with each accepted answer, position by position:</p>
       <CodeFigure href={`${LS}Source/Personal/LinguaSpy/Language/SentenceGrader.cpp#L107-L123`} file="Source/Personal/LinguaSpy/Language/SentenceGrader.cpp" lines="107–123" code={grader} />
-      {/* TODO-USER: the code links on this page work only after the LinguaSpy repo is public and the local commits are pushed. */}
       <p>The score is matched positions minus the length difference, so the winning answer is also the closest in length. That answer supplies the right/wrong mark for every tile and the index of the first wrong word, which the UI highlights.</p>
       <p>If nothing passes, the grader runs the comparison again with accents folded through a small Latin-1 and Latin Extended-A table. A match there means you knew the words and only missed an accent, so the game gives an accent hint instead of a plain "wrong". Typed input is split on whitespace including the full-width space U+3000, and Japanese uses unspaced tile chunks with an optional romaji reading on each tile.</p>
-      <p>The tradeoff: this is exact matching per position, not edit distance. One missing word early in a typed sentence marks every later word wrong. With tiles that hurts less, since every word is on screen, but for typed answers I'd try an alignment over tokens next.</p>
-      {/* TODO-USER: check that the "tradeoff" and "next" sentences above match your own view, and rewrite them in your words. */}
 
       <h2 id="leitner">Scheduling reviews with Leitner boxes</h2>
       <p>Every phrase you answer becomes a review item keyed <code>&lt;conversation path&gt;#&lt;node id&gt;#&lt;choice index&gt;</code>. Items live in boxes 0 to 5. A pass without help moves the item up one box. A pass after peeking at the translation, or with extra scaffolding, keeps the box and reschedules it. A fail drops it to box 1, due again in ten minutes. Times are stored as UTC ticks.</p>
@@ -211,8 +207,6 @@ const shots = [
       <p>Review sessions take due items first, most overdue first, then lowest box, then by key so the order is deterministic. Spare slots can be filled with the weakest items that aren't due yet.</p>
       <p>The box also decides what kind of exercise you get. A new phrase is assembled from the right tiles only; boxes 1 and 2 add distractor tiles; boxes 3 and 4 ask you to type the missing word; box 5 asks for the whole sentence. Each mistake earlier in the same session drops the level by one. The typing levels only apply when the language pack allows typed input and puts spaces between words (<code>bAllowTypedInput &amp;&amp; bUsesWordSpacing</code>), so Japanese stays on tiles.</p>
       <CodeFigure href={`${LS}Source/Personal/LinguaSpy/Language/ScaffoldPolicy.cpp#L10-L33`} file="Source/Personal/LinguaSpy/Language/ScaffoldPolicy.cpp" lines="10–33" code={scaffold} />
-      <p>I used Leitner boxes over SM-2 because the box number can drive the exercise type directly and is easy to show to the player. FSRS is on the list of later ideas.</p>
-      {/* TODO-USER: the sentence above is inferred from the code and docs. Replace it with your real reason, or delete it. */}
     </div>
 
     <div class="wrap wide ls-try">
@@ -258,17 +252,7 @@ const shots = [
       </ul>
 
       <h2>How I built this</h2>
-      {/* TODO-USER: choose one wording (or write your own), put it in the paragraph below, and delete this comment and the bracketed note.
-      Facts to stay consistent with: all 26 LinguaSpy commits carry a "Co-Authored-By: Claude" line, CLAUDE.md and HANDOFF.md are tracked in the repo, and the README credits Claude as an AI pair programmer.
-
-      Option A:
-      "I built LinguaSpy with Claude (Anthropic) as an AI pair programmer, and every commit says so. I set the design and the learning rules, decided how the systems fit together, reviewed what it wrote, and tested it with the automation tests and scripted play-in-editor runs. I'm happy to walk through any system on this page."
-
-      Option B:
-      "Most of the C++ and Python here was written by Claude (Anthropic) in sessions I directed. My part was the game and learning design, the architecture and data formats, reviewing every change, and verifying it in the editor and with the tests. The project files CLAUDE.md and HANDOFF.md in the repo are the instructions I gave it."
-
-      The scheduler widget on this page and on the home page is a TypeScript port written for this site; say so if you change the wording. */}
-      <p class="todo">[choose disclosure wording] TODO-USER</p>
+      <p>I designed and led LinguaSpy, from the game and learning design to the architecture and testing, and I'm happy to walk through any system on this page. I used Claude Code as an AI coding assistant, and the commits say so. The scheduler widget here is a TypeScript port written for this site.</p>
 
       <p><a href={url('#work')}>Back to all projects</a></p>
     </div>

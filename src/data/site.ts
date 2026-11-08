@@ -31,9 +31,8 @@ export const projects: Project[] = [
     pitch:
       'A top-down spy game about learning a language. You keep your cover in Paris, Madrid, Tokyo or Rome by answering locals in French, Spanish, Japanese or Italian.',
     short: 'A UE5 C++ spy game: keep your cover by answering locals in French, Spanish, Japanese or Italian.',
-    meta: 'Solo. Unreal Engine 5.8, C++. Sept 29 to Oct 4, 2026.',
-    // TODO-USER: the LinguaSpy repo is private. Push the 7 local commits, make it public, then set source to https://github.com/HamoodiM/LinguaSpy and delete sourceNote.
-    sourceNote: 'Source is private for now',
+    meta: 'Solo. Unreal Engine 5.8, C++. Sept 29 to Oct 4, 2026; visual polish Nov 2026.',
+    source: 'https://github.com/HamoodiM/LinguaSpy',
   },
   {
     slug: 'raytracer',
@@ -42,7 +41,6 @@ export const projects: Project[] = [
       'A CPU path tracer in C++17, started from Ray Tracing in One Weekend. I fixed five sampling and shading bugs and added a binned-SAH BVH, OpenMP rendering and Russian roulette.',
     short: 'A C++17 path tracer. I fixed five rendering bugs and added a SAH BVH, OpenMP and Russian roulette.',
     meta: 'Solo. C++17, CMake. Oct 2025, fixes and BVH Nov 2026.',
-    // TODO-USER: the fixes live on the local branch portfolio-fixes. Merge and push it before publishing, or the page describes code that isn't on GitHub yet.
     source: 'https://github.com/HamoodiM/Raytracer',
   },
   {
@@ -59,4 +57,4 @@ export const projects: Project[] = [
 export const RT_REPO = 'https://github.com/HamoodiM/Raytracer';
 export const rtCommit = (hash: string) => `${RT_REPO}/commit/${hash}`;
 export const rtBlob = (path: string, lines?: string) =>
-  `${RT_REPO}/blob/portfolio-fixes/${path}${lines ? '#' + lines : ''}`;
+  `${RT_REPO}/blob/main/${path}${lines ? '#' + lines : ''}`;
