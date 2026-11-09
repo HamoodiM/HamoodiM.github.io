@@ -80,7 +80,7 @@ bool TryConsume(double Now, float ShotsPerSecond)
         <ul>
           <li><a href="#results">The results</a>: hit registration with and without lag compensation, and peeker's advantage across tick rate and latency.</li>
           <li><a href="#pipeline">The shot pipeline</a>: prediction, the client's view time, and the server rewind.</li>
-          <li><a href="#bugs">Two bugs the measurements caught</a>.</li>
+          <li><a href="#bugs">Three bugs the measurements caught</a>.</li>
         </ul>
         <p class="tldr__links"><a href={RESUME}>Résumé (PDF)</a><a href={url('#hitreglab')}>On the home page</a></p>
       </div>
@@ -125,10 +125,11 @@ bool TryConsume(double Now, float ShotsPerSecond)
       <CodeFigure href={`${HL}Source/HitregLab/Weapons/HLWeaponDefinition.h#L174-L187`} file="Source/HitregLab/Weapons/HLWeaponDefinition.h" lines="174–187" code={limiter} />
       <p>The client's clock is its own NTP-style estimate: it pings the server and keeps the offset from the lowest-round-trip sample. In the same runs, the engine's built-in game-state clock was off by 40–70 ms, which is enough to rewind to the wrong place.</p>
 
-      <h2 id="bugs">Two bugs the measurements caught</h2>
+      <h2 id="bugs">Three bugs the measurements caught</h2>
       <ol>
         <li><strong>Moves that never reached the server.</strong> I turned off the engine's replicated movement so remote players would only be drawn from my snapshots. The peek test showed the peeker moving on its own screen but never on the holder's. The engine's character movement only sends a client's moves to the server when the actor replicates movement. The fix: keep it on, and have remote players ignore the engine's replicated position.</li>
         <li><strong>Drawing the future.</strong> Remote players were first drawn at <code>server time − interpolation delay</code>. That is ahead of the newest snapshot a client can have, so they just froze on the latest one. The rewind test caught it once its client buffer only held snapshots that would actually have arrived.</li>
+        <li><strong>A kill cam filmed from the wrong eyes.</strong> The first demo's kill cam jumped between viewpoints. Unreal assigns player ids only to player controllers, so every bot had id 0. The recorder keyed its tracks by player id, so the bots merged into one track. Bots now take ids from the game session, the recorder refuses to merge two characters, and each kill cam logs how far the killer's recorded aim was from the victim at the kill: 0.1 to 0.3 degrees after the fix.</li>
       </ol>
 
       <h2>Aim assist, measured</h2>
