@@ -4,6 +4,8 @@ import LoopVideo from './LoopVideo.astro';
 import still from '../assets/hitreglab/still_lagcomp.png';
 import hitregChart from '../assets/hitreglab/hitreg_registration.png';
 import peekChart from '../assets/hitreglab/peek_advantage.png';
+import coverChart from '../assets/hitreglab/cover_deaths.png';
+import autopsyStill from '../assets/hitreglab/still_autopsy.png';
 import { url } from '../data/site';
 ---
 <section class="ch-hl" id="hitreglab" aria-labelledby="hl-h">
@@ -12,6 +14,7 @@ import { url } from '../data/site';
       <h2 id="hl-h" data-reveal>Hitreg Lab</h2>
       <div class="prose">
         <p>A first-person test range in Unreal Engine 5 and C++ for studying how shots feel and how they register. It has data-driven weapons, controller aim assist, client-predicted firing with server-side rewind lag compensation, a peeker's-advantage meter and a kill cam. Every system is measured over a dedicated server with two clients, not just built.</p>
+        <p>The newest part takes on the most common netcode complaint, "I was behind the wall and still died". The server now writes a verdict with its reason for every shot (the Shot Autopsy), and a benchmark measures how long the victim had already been in cover when the hit landed.</p>
       </div>
     </header>
 
@@ -25,7 +28,7 @@ import { url } from '../data/site';
     <ul class="ch-hl__nums">
       <li><strong>100%</strong><span>of on-screen hits registered up to 150 ms ping with lag compensation, vs 23–30% without</span></li>
       <li><strong>76 → 247 ms</strong><span>peeker's advantage at 60 Hz as round trip goes from 0 to 150 ms (160 measured trials)</span></li>
-      <li><strong>~4 ms</strong><span>clock-sync error under 40 ms jitter; the engine's own clock was off by 40–70 ms</span></li>
+      <li><strong>364 ms</strong><span>how long the victim had already been behind cover, on their own screen, when the hit landed at 150 ms ping (median of 12)</span></li>
     </ul>
 
     <div class="ch-hl__charts">
@@ -39,8 +42,21 @@ import { url } from '../data/site';
       </figure>
     </div>
 
+    <div class="ch-hl__autopsy">
+      <LoopVideo
+        src={url('media/hitreglab/autopsy-demo.mp4')}
+        poster={autopsyStill}
+        label="19-second clip of the Shot Autopsy viewer: a shot at 150 ms ping replayed in 3D, with the shooter's view, the server's rewound hitboxes, where the victim really was, and where the victim's own screen had them when the hit landed."
+        caption="Shot Autopsy at 150 ms: blue is the target on the shooter's screen, green the server's rewound hitboxes, red where it really was, pink where its own screen had it when the hit landed."
+      />
+      <figure>
+        <Image src={coverChart} alt="Two charts. Left: the median time the victim had been behind cover when the hit landed rises from about 0 ms at 0 ms round trip to 249 ms at 100 ms and 364 ms at 150 ms with the default 200 ms cap, and 552 ms at 250 ms with a 300 ms cap. Right: with the cover rule, last-moment shots at a target diving into cover stop registering at 100 to 150 ms, while open-field shots still register 100%, unlike a plain 100 ms cap." widths={[480, 800, 1200]} sizes="(min-width: 60rem) 30rem, 100vw" loading="lazy" />
+        <figcaption class="small muted">A cover-aware rewind limit stops the late deaths at 100–150 ms. The cost: the high-ping shooter loses those last-moment hits.</figcaption>
+      </figure>
+    </div>
+
     <p class="ch-hl__links">
-      <a href={url('projects/hitreglab/')}>Read the write-up: the shot pipeline, the rewind, and three bugs the measurements caught</a>
+      <a href={url('projects/hitreglab/')}>Read the write-up: the shot pipeline, the rewind, behind-cover deaths and three bugs the measurements caught</a>
       <a href="https://github.com/HamoodiM/HitregLab">Source on GitHub</a>
     </p>
   </div>
@@ -57,8 +73,10 @@ import { url } from '../data/site';
   .ch-hl__charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 2.5vw, 2rem); }
   .ch-hl__charts figure { display: grid; gap: 0.5rem; }
   .ch-hl__charts :global(img) { width: 100%; height: auto; background: #fff; }
+  .ch-hl__autopsy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 2.5vw, 2rem); margin-top: clamp(1.5rem, 3vw, 2.5rem); align-items: start; }
+  .ch-hl__autopsy figure { display: grid; gap: 0.5rem; margin: 0; }
   .ch-hl__links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-top: clamp(1.5rem, 3vw, 2.5rem); }
   @media (max-width: 48rem) {
-    .ch-hl__nums, .ch-hl__charts { grid-template-columns: minmax(0, 1fr); }
+    .ch-hl__nums, .ch-hl__charts, .ch-hl__autopsy { grid-template-columns: minmax(0, 1fr); }
   }
 </style>

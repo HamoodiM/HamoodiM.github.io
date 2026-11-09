@@ -29,8 +29,8 @@ export const projects: Project[] = [
     slug: 'hitreglab',
     name: 'Hitreg Lab',
     pitch:
-      "A UE5 C++ first-person test range for how shots feel and register: data-driven weapons, controller aim assist, client prediction with server-side rewind lag compensation, a peeker's-advantage meter and a kill cam, all measured over a dedicated server.",
-    short: "A UE5 C++ FPS lab: lag compensation, peeker's advantage, aim assist and a kill cam, all measured.",
+      "A UE5 C++ first-person test range for how shots feel and register: client prediction with server-side rewind lag compensation, a server verdict for every shot, a measured answer to \"I was behind the wall and still died\", a peeker's-advantage meter, aim assist and a kill cam.",
+    short: "A UE5 C++ FPS lab: lag compensation, a verdict for every shot, behind-cover deaths and peeker's advantage, all measured.",
     meta: 'Unreal Engine 5.8, C++. Nov 2026.',
     source: 'https://github.com/HamoodiM/HitregLab',
   },

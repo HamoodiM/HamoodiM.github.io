@@ -9,9 +9,12 @@ import still from '../../assets/hitreglab/still_lagcomp.png';
 import killcam from '../../assets/hitreglab/still_killcam.png';
 import hitregChart from '../../assets/hitreglab/hitreg_registration.png';
 import peekChart from '../../assets/hitreglab/peek_advantage.png';
+import coverChart from '../../assets/hitreglab/cover_deaths.png';
+import autopsyStill from '../../assets/hitreglab/still_autopsy.png';
 
 const HL = 'https://github.com/HamoodiM/HitregLab/blob/main/';
 const poster = await getImage({ src: still, width: 1280, format: 'webp', quality: 75 });
+const autopsyPoster = await getImage({ src: autopsyStill, width: 1280, format: 'webp', quality: 75 });
 
 const renderTime = `
 // Snapshots stamped at server time T arrive here at about T + one-way latency, so the newest data we can
@@ -23,22 +26,39 @@ const double OneWay = (PC && PC->Clock) ? PC->Clock->GetBestRttMs() / 2000.0 : 0
 return Now - OneWay - (GS ? GS->GetInterpDelaySeconds(InterpTicks) : 0.05);`;
 
 const rewind = `
-const double TraceTime = bRewind ? FMath::Clamp(ViewTime, Now - MaxRewind, Now) : Now;
-...
-for (TActorIterator<AHLCharacter> It(World); It; ++It)
+const FHLPose Current = Target->GetPose();
+FHLRewindInput TargetRule = Rule;
+bool bInCover = false;
+if (HLRewindRules::NeedsCoverTest(TargetRule))
 {
-    AHLCharacter* Target = *It;
-    if (Target == Shooter || !Target->IsAlive())
+    bInCover = IsInCoverFrom(Origin, Target, Current);
+    TargetRule.bTargetInCoverNow = bInCover;
+}
+const FHLRewindDecision Decision = HLRewindRules::Resolve(TargetRule);
+FHLPose Pose = Current;
+if (Decision.TraceTime < Now)
+{
+    GetPoseAt(Target, Decision.TraceTime, Pose);
+}`;
+
+const coverRule = `
+// A view time in the future (clock error) is traced now; an old one is traced at the cap
+Out.TraceTime = FMath::Min(In.ViewTime, In.Now);
+const double Oldest = In.Now - FMath::Max(In.MaxRewindSeconds, 0.0);
+if (Out.TraceTime < Oldest)
+{
+    Out.TraceTime = Oldest;
+    Out.Clamp = EHLRewindClamp::Cap;
+}
+if (In.bCoverRule && In.bTargetInCoverNow)
+{
+    const double CoverOldest = In.Now - FMath::Max(In.CoverBudgetSeconds, 0.0);
+    if (Out.TraceTime < CoverOldest)
     {
-        continue;
+        Out.TraceTime = CoverOldest;
+        Out.Clamp = EHLRewindClamp::CoverRule;
     }
-    FHLPose Pose = Target->GetPose();
-    if (bRewind && TraceTime < Now)
-    {
-        GetPoseAt(Target, TraceTime, Pose);
-    }
-    FHLHitboxHit Hit;
-    if (HLHitboxMath::RayHitboxes(Origin, Dir, Limit, Target->Hitboxes, Pose, Hit) && ...)`;
+}`;
 
 const limiter = `
 bool TryConsume(double Now, float ShotsPerSecond)
@@ -58,7 +78,7 @@ bool TryConsume(double Now, float ShotsPerSecond)
 ---
 <Base
   title="Hitreg Lab, Mohammad Mohammad"
-  description="Hitreg Lab: a UE5 C++ first-person test range. Client-predicted firing, server-side rewind lag compensation, a peeker's-advantage meter, controller aim assist and a kill cam, all measured over a dedicated server."
+  description="Hitreg Lab: a UE5 C++ first-person test range. Client-predicted firing, server-side rewind lag compensation, a server verdict for every shot, behind-cover deaths measured, a peeker's-advantage meter, controller aim assist and a kill cam."
   page="hitreglab"
 >
   <ProjectHead slug="hitreglab" title="Hitreg Lab" lede="A first-person test range in Unreal Engine 5 and C++ for how shots feel and how they register. Every system is measured over a dedicated server with two clients, not just built.">
@@ -72,12 +92,13 @@ bool TryConsume(double Now, float ShotsPerSecond)
       <dl class="facts">
         <dt>Engine</dt><dd>Unreal Engine 5.8, C++ (game module and an editor module)</dd>
         <dt>Dates</dt><dd>Nov 2026</dd>
-        <dt>Tests</dt><dd>13 headless automation tests, plus three measurement harnesses that run on a dedicated server</dd>
+        <dt>Tests</dt><dd>16 headless automation tests, plus four measurement harnesses that run on a dedicated server</dd>
         <dt>Code</dt><dd><a href="https://github.com/HamoodiM/HitregLab">github.com/HamoodiM/HitregLab</a></dd>
       </dl>
       <div>
         <h2>Worth a look</h2>
         <ul>
+          <li><a href="#behind-cover">"I was behind the wall and still died"</a>: measured, a fairer rule, and what it costs.</li>
           <li><a href="#results">The results</a>: hit registration with and without lag compensation, and peeker's advantage across tick rate and latency.</li>
           <li><a href="#pipeline">The shot pipeline</a>: prediction, the client's view time, and the server rewind.</li>
           <li><a href="#bugs">Three bugs the measurements caught</a>.</li>
@@ -97,10 +118,35 @@ bool TryConsume(double Now, float ShotsPerSecond)
         <li><strong>Controller aim assist:</strong> a radial dead zone and response curve, slowdown near targets, rotational pull that only acts while you're giving input, and bullet magnetism. An editor tab tunes it live and benchmarks it.</li>
         <li><strong>A peeker's-advantage meter</strong> and a <strong>hit-registration bench</strong> that run unattended on a dedicated server.</li>
         <li><strong>A kill cam:</strong> the last few seconds replayed from the killer's eyes, with scrubbing and slow motion. Replays save to a versioned file for bug reports.</li>
+        <li><strong>A Shot Autopsy:</strong> the server writes a verdict with its reason for every shot, and a viewer replays any shot in 3D.</li>
       </ul>
 
+      <h2 id="behind-cover">"I was behind the wall and still died"</h2>
+      <p>It's the most common netcode complaint in shooters, and it isn't a bug. Favour-the-shooter lag compensation makes a hit count where the shooter saw the target, so the target pays for the latency. To see that cost, the server now judges every shot and records why: <code>hit</code>, <code>hit_clamped</code>, <code>miss_capped</code> (the view was older than the rewind cap and the target had moved on), <code>miss_cover_rule</code>, rejections for fire rate or origin, and so on. It also re-tests each shot at the shooter's own view time, so a miss the shooter saw as a hit names the clamp that caused it. The records go to the two players involved and into the replay file, and the viewer below replays any of them.</p>
+    </div>
+    <div class="wrap">
+      <figure class="trailer hl-chart">
+        <video controls preload="none" playsinline width="1280" height="720" poster={autopsyPoster.src} aria-label="19-second clip of the Shot Autopsy viewer replaying a hit at 150 ms round trip">
+          <source src={url('media/hitreglab/autopsy-demo.mp4')} type="video/mp4" />
+        </video>
+        <figcaption class="small muted">A hit at 150 ms round trip. Blue: the target on the shooter's screen. Green: where the server tested it (rewound 200 ms, the cap). Red: where it really was when the server decided. Pink: where the victim's own screen had it when the hit landed (an estimate). The yellow figure scrubs along its path.</figcaption>
+      </figure>
+    </div>
+    <div class="wrap prose">
+      <p>To measure it, a runner strafes from the open into cover on a dedicated server with two clients. The shooter's client aims perfectly at the runner as it draws it and fires one shot 10 to 90 cm before the runner's torso leaves its screen. The runner's client records when its own screen lost sight of the shooter and when the hit reached it. With the default 200 ms cap, every one of those shots registered up to 150 ms round trip, and the hit landed a median <strong>249 ms</strong> (at 100 ms) and <strong>364 ms</strong> (at 150 ms) after the victim's own screen showed them behind the wall, 1.5 and 2.2 m past the edge. At 250 ms the cap refuses them all; raise it to 300 ms and they land 552 ms after cover.</p>
+      <p>Then a fairer rule: if the target is already out of the shooter's sight at its current server position, rewind it at most 100 ms. A shooter whose view is younger than that is never affected, and neither is any target in the open. In the cover test it stopped the late deaths: 4 of 12 last-moment shots still registered at 100 ms (vs 12 of 12) and none at 150 ms. That is also its cost, because those were real hits on the shooter's screen. A plain 100 ms cap does the same in cover, but against open-field targets it registered only 50% and 23% of on-screen hits at 100 and 150 ms, where the cover rule kept 100%. It doesn't remove the trade-off between shooter and target; it moves the last part of a high-ping view's cost back to the shooter, and only in the case players complain about. 12 trials per point, with both players on the same simulated ping.</p>
+    </div>
+    <div class="wrap">
+      <figure class="hl-chart">
+        <Image src={coverChart} alt="Two charts. Left: the median time the victim had been behind cover when the hit landed rises from about 0 ms at 0 ms round trip to 249 ms at 100 ms and 364 ms at 150 ms with the default 200 ms cap, and 552 ms at 250 ms with a 300 ms cap. Right: with the cover rule or a 100 ms cap, last-moment shots at a target diving into cover stop registering at 100 to 150 ms; against open-field targets the cover rule still registers 100% while a 100 ms cap drops to 50% and 23%." widths={[640, 960, 1200]} sizes="(min-width: 60rem) 52rem, 100vw" loading="lazy" />
+      </figure>
+    </div>
+    <div class="wrap prose">
+      <p>The rule is a pure function, so it's unit-tested without a world, and <code>TraceShot</code> decides it per target:</p>
+      <CodeFigure href={`${HL}Source/HitregLab/Net/HLRewindRules.cpp#L12-L28`} file="Source/HitregLab/Net/HLRewindRules.cpp" lines="12–28" code={coverRule} />
+
       <h2 id="results">Results</h2>
-      <p>For the lag compensation bench, a client aims perfectly at a strafing target <em>as it draws it</em> and fires single taps. The chart shows how many of those on-screen hits the server confirmed. With compensation, every one registered up to 150 ms round trip. Without it, 68% registered even at 0 ms, because remote players are drawn about two ticks in the past, and 23–30% at real pings. At 250 ms the 200 ms rewind cap kicks in on purpose, so nobody can be shot more than 200 ms after reaching cover.</p>
+      <p>For the lag compensation bench, a client aims perfectly at a strafing target <em>as it draws it</em> and fires single taps. The chart shows how many of those on-screen hits the server confirmed. With compensation, every one registered up to 150 ms round trip. Without it, 68% registered even at 0 ms, because remote players are drawn about two ticks in the past, and 23–30% at real pings. At 250 ms the 200 ms rewind cap kicks in on purpose. The cap limits how far a target is rewound; it does not mean nobody dies more than 200 ms after reaching cover, as <a href="#behind-cover">the cover test</a> shows.</p>
     </div>
     <div class="wrap">
       <figure class="hl-chart">
@@ -119,8 +165,8 @@ bool TryConsume(double Now, float ShotsPerSecond)
       <h2 id="pipeline">The shot pipeline</h2>
       <p>Remote players are drawn from timestamped server snapshots at a fixed delay behind the newest snapshot that can have arrived. Because the client knows exactly when it is drawing them, it can send that time with each shot:</p>
       <CodeFigure href={`${HL}Source/HitregLab/Core/HLCharacter.cpp#L283-L289`} file="Source/HitregLab/Core/HLCharacter.cpp" lines="283–289" code={renderTime} />
-      <p>The server clamps that view time to the rewind cap and tests each character's hitboxes at the pose it had then. Hitboxes are spheres and boxes tested with plain ray maths, so rewinding means evaluating an old pose, not teleporting colliders. A shot costs tens of microseconds, and most of that is the world trace.</p>
-      <CodeFigure href={`${HL}Source/HitregLab/Net/HLLagCompensationSubsystem.cpp#L81-L112`} file="Source/HitregLab/Net/HLLagCompensationSubsystem.cpp" lines="81–112" code={rewind} />
+      <p>The server clamps that view time to the rewind cap (and the cover rule, per target) and tests each character's hitboxes at the pose it had then. Hitboxes are spheres and boxes tested with plain ray maths, so rewinding means evaluating an old pose, not teleporting colliders. A shot costs tens of microseconds, and most of that is the world trace.</p>
+      <CodeFigure href={`${HL}Source/HitregLab/Net/HLLagCompensationSubsystem.cpp#L141-L154`} file="Source/HitregLab/Net/HLLagCompensationSubsystem.cpp" lines="141–154" code={rewind} />
       <p>The server doesn't trust the client's fire rate. A token bucket refills at the gun's rate plus 10% and holds up to three shots, so packets that arrive bunched together pass, but a modified client can't out-fire the gun. An automation test feeds it a client firing at double rate.</p>
       <CodeFigure href={`${HL}Source/HitregLab/Weapons/HLWeaponDefinition.h#L174-L187`} file="Source/HitregLab/Weapons/HLWeaponDefinition.h" lines="174–187" code={limiter} />
       <p>The client's clock is its own NTP-style estimate: it pings the server and keeps the offset from the lowest-round-trip sample. In the same runs, the engine's built-in game-state clock was off by 40–70 ms, which is enough to rewind to the wrong place.</p>
