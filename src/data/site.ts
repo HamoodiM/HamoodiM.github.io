@@ -47,8 +47,8 @@ export const projects: Project[] = [
     slug: 'raytracer',
     name: 'Raytracer',
     pitch:
-      'A CPU path tracer in C++17, started from Ray Tracing in One Weekend. I fixed five sampling and shading bugs and added a binned-SAH BVH, OpenMP rendering and Russian roulette.',
-    short: 'A C++17 path tracer. I fixed five rendering bugs and added a SAH BVH, OpenMP and Russian roulette.',
+      'A CPU path tracer in C++17, started from Ray Tracing in One Weekend. Version 2 (2026) fixes five sampling and shading bugs and adds a binned-SAH BVH, OpenMP rendering and Russian roulette.',
+    short: 'A C++17 path tracer. Version 2 fixes five rendering bugs and adds a SAH BVH, OpenMP and Russian roulette.',
     meta: 'Solo. C++17, CMake. Oct 2025, fixes and BVH Nov 2026.',
     source: 'https://github.com/HamoodiM/Raytracer',
   },
